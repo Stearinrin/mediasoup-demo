@@ -452,7 +452,7 @@ export default class PeerView extends React.Component
 				<audio
 					ref='audioElem'
 					autoPlay
-					playsInline
+					// playsInline
 					muted={isMe || audioMuted}
 					controls={false}
 				/>

@@ -90,7 +90,7 @@ async function run()
 	if (info)
 	{
 		// eslint-disable-next-line require-atomic-updates
-		window.SHOW_INFO = true;
+		window.SHOW_INFO = false;
 	}
 
 	if (throttleSecret)
