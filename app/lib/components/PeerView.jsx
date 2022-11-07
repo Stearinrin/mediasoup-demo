@@ -823,6 +823,7 @@ PeerView.propTypes =
 	onChangeMaxSendingSpatialLayer : PropTypes.func,
 	onChangeVideoPreferredLayers   : PropTypes.func,
 	onChangeVideoPriority          : PropTypes.func,
+	onDownloadStats                : PropTypes.func,
 	onRequestKeyFrame              : PropTypes.func,
 	onStatsClick                   : PropTypes.func.isRequired
 };

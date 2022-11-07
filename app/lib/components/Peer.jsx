@@ -82,6 +82,10 @@ const Peer = (props) =>
 				{
 					roomClient.setConsumerPriority(videoConsumer.id, priority);
 				}}
+				onDownloadStats={(statsIds) =>
+				{
+					roomClient.downloadStats(statsIds);
+				}}
 				onRequestKeyFrame={() =>
 				{
 					roomClient.requestConsumerKeyFrame(videoConsumer.id);

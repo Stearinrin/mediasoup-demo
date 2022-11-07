@@ -1,5 +1,6 @@
 import protooClient from 'protoo-client';
 import * as mediasoupClient from 'mediasoup-client';
+import fileDownload from 'js-file-download';
 import Logger from './Logger';
 import { getProtooUrl } from './urlFactory';
 import * as cookiesManager from './cookiesManager';
@@ -1657,6 +1658,50 @@ export default class RoomClient
 				{
 					type : 'error',
 					text : `Error setting Consumer priority: ${error}`
+				}));
+		}
+	}
+
+	async downloadStats(statsIds)
+	{
+		try
+		{
+			logger.debug('downloadStats() [statsIds:%o]', statsIds);
+
+			const now = new Date();
+			let stats = {};
+
+			if (this._produce)
+			{
+				stats = {
+					'audio'     : JSON.stringify(this.getAudioRemoteStats(), null, 2),
+					'video'	    : JSON.stringify(this.getVideoRemoteStats(), null, 2),
+					'timestamp' : now.getTime()
+				};
+			}
+			else (this._consume)
+			{
+				stats = {
+					'audio'     : JSON.stringify(this.getConsumerRemoteStats(statsIds[0]), null, 2),
+					'video'	    : JSON.stringify(this.getConsumerRemoteStats(statsIds[1]), null, 2),
+					'timestamp' : now.getTime()
+				};
+			}
+
+			const blob = new Blob([ JSON.stringify(stats, null, 2) ], { type: 'application/json' });
+			const isotime = now.toISOString().replace(/:/g, '-');
+			const filename = `webrtc_mediasoup_stats_${isotime}.json`;
+
+			fileDownload(blob, filename);
+		}
+		catch (error)
+		{
+			logger.error('downloadStats() | failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `Error downloading stats: ${error}`
 				}));
 		}
 	}

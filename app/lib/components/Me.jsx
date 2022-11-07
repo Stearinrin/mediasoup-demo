@@ -155,6 +155,10 @@ class Me extends React.Component
 					{
 						roomClient.setMaxSendingSpatialLayer(spatialLayer);
 					}}
+					onDownloadStats={(statsIds) =>
+					{
+						roomClient.downloadStats(statsIds);
+					}}
 					onStatsClick={onSetStatsPeerId}
 				/>
 
