@@ -3,10 +3,7 @@ import UrlParse from 'url-parse';
 import React from 'react';
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
-import {
-	applyMiddleware as applyReduxMiddleware,
-	createStore as createReduxStore
-} from 'redux';
+import { configureStore as createReduxStore } from '@reduxjs/toolkit';
 import thunk from 'redux-thunk';
 // import { createLogger as createReduxLogger } from 'redux-logger';
 import randomString from 'random-string';
@@ -39,11 +36,11 @@ const reduxMiddlewares = [ thunk ];
 // }
 
 let roomClient;
-const store = createReduxStore(
-	reducers,
-	undefined,
-	applyReduxMiddleware(...reduxMiddlewares)
-);
+const store = createReduxStore({
+	reducer        : reducers,
+	preloadedState : undefined,
+	middleware     : reduxMiddlewares
+});
 
 window.STORE = store;
 
@@ -90,7 +87,7 @@ async function run()
 	if (info)
 	{
 		// eslint-disable-next-line require-atomic-updates
-		window.SHOW_INFO = false;
+		window.SHOW_INFO = true;
 	}
 
 	if (throttleSecret)

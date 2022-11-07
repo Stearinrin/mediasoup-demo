@@ -82,6 +82,7 @@ export default class PeerView extends React.Component
 			onChangeMaxSendingSpatialLayer,
 			onChangeVideoPreferredLayers,
 			onChangeVideoPriority,
+			onDownloadStats,
 			onRequestKeyFrame,
 			onStatsClick
 		} = this.props;
@@ -140,7 +141,7 @@ export default class PeerView extends React.Component
 									{'id: '}
 									<span
 										className='copiable'
-										data-tip='Copy video producer id to clipboard'
+										data-tip='Copy audio consumer id to clipboard'
 										onClick={() => clipboardCopy(`"${audioConsumerId}"`)}
 									>
 										{audioConsumerId}
@@ -176,7 +177,7 @@ export default class PeerView extends React.Component
 									{'id: '}
 									<span
 										className='copiable'
-										data-tip='Copy audio consumer id to clipboard'
+										data-tip='Copy video producer id to clipboard'
 										onClick={() => clipboardCopy(`"${videoProducerId}"`)}
 									>
 										{videoProducerId}
@@ -394,6 +395,38 @@ export default class PeerView extends React.Component
 							<If condition={videoConsumerId && videoScore}>
 								{this._printConsumerScore(videoConsumerId, videoScore)}
 							</If>
+						</If>
+
+						<If condition={audioProducerId || videoProducerId}>
+							<p>
+								<span
+									className='clickable'
+									onClick={(event) =>
+									{
+										event.stopPropagation();
+
+										onDownloadStats([ audioProducerId, videoProducerId ]);
+									}}
+								>
+									{'[ download producer stats ]'}
+								</span>
+							</p>
+						</If>
+
+						<If condition={audioConsumerId || videoConsumerId}>
+							<p>
+								<span
+									className='clickable'
+									onClick={(event) =>
+									{
+										event.stopPropagation();
+
+										onDownloadStats([ audioConsumerId, videoConsumerId ]);
+									}}
+								>
+									{'[ download consumer stats ]'}
+								</span>
+							</p>
 						</If>
 					</div>
 
