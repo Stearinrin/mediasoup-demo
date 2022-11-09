@@ -253,7 +253,10 @@ class Stats extends React.Component
 
 		if (peerId && !prevProps.peerId)
 		{
-			this._delayTimer = setTimeout(() => this._start(), 250);
+			if (!this._delayTimer)
+			{
+				this._delayTimer = setInterval(() => this._start(), 1000);
+			}
 		}
 		else if (!peerId && prevProps.peerId)
 		{
@@ -262,15 +265,24 @@ class Stats extends React.Component
 		else if (peerId && prevProps.peerId && peerId !== prevProps.peerId)
 		{
 			this._stop();
-			this._start();
+			if (!this._delayTimer)
+			{
+				this._delayTimer = setInterval(() => this._start(), 1000);
+			}
 		}
+	}
+
+	componentWillUnmount()
+	{
+		clearInterval(this._delayTimer);
+		this._stop();
 	}
 
 	async _start()
 	{
 		const {
 			roomClient,
-			isMe,
+			// isMe,
 			audioConsumerId,
 			videoConsumerId,
 			chatDataConsumerId,
@@ -293,8 +305,9 @@ class Stats extends React.Component
 		let videoConsumerLocalStats = null;
 		let chatDataConsumerRemoteStats = null;
 		let botDataConsumerRemoteStats = null;
+		let totalStats = null;
 
-		if (isMe)
+		// if (isMe)
 		{
 			sendTransportRemoteStats = await roomClient.getSendTransportRemoteStats()
 				.catch(() => {});
@@ -326,12 +339,9 @@ class Stats extends React.Component
 			botDataProducerRemoteStats = await roomClient.getBotDataProducerRemoteStats()
 				.catch(() => {});
 
-			botDataConsumerRemoteStats =
-				await roomClient.getDataConsumerRemoteStats(botDataConsumerId)
-					.catch(() => {});
-		}
-		else
-		{
+			// }
+			// else
+			// {
 			audioConsumerRemoteStats = await roomClient.getConsumerRemoteStats(audioConsumerId)
 				.catch(() => {});
 
@@ -347,6 +357,29 @@ class Stats extends React.Component
 			chatDataConsumerRemoteStats =
 				await roomClient.getDataConsumerRemoteStats(chatDataConsumerId)
 					.catch(() => {});
+
+			botDataConsumerRemoteStats =
+				await roomClient.getDataConsumerRemoteStats(botDataConsumerId)
+					.catch(() => {});
+
+			totalStats = {
+				// sendTransportRemoteStats,
+				// sendTransportLocalStats,
+				// recvTransportRemoteStats,
+				// recvTransportLocalStats,
+				audioProducerRemoteStats,
+				audioProducerLocalStats,
+				videoProducerRemoteStats,
+				videoProducerLocalStats,
+				// chatDataProducerRemoteStats,
+				// botDataProducerRemoteStats,
+				audioConsumerRemoteStats,
+				audioConsumerLocalStats,
+				videoConsumerRemoteStats,
+				videoConsumerLocalStats
+				// chatDataConsumerRemoteStats,
+				// botDataConsumerRemoteStats
+			};
 		}
 
 		this.setState(
@@ -369,12 +402,17 @@ class Stats extends React.Component
 				botDataConsumerRemoteStats
 			});
 
-		this._delayTimer = setTimeout(() => this._start(), 2500);
+		const timestamp = new Date();
+
+		totalStats['timestamp'] = timestamp.getTime();
+		roomClient.pushTotalStats(totalStats);
+
+		// console.log(roomClient._totalStatsList);
 	}
 
 	_stop()
 	{
-		clearTimeout(this._delayTimer);
+		// clearTimeout(this._delayTimer);
 
 		this.setState(
 			{

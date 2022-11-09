@@ -405,7 +405,7 @@ export default class PeerView extends React.Component
 									{
 										event.stopPropagation();
 
-										onDownloadStats([ audioProducerId, videoProducerId ]);
+										onDownloadStats('producer');
 									}}
 								>
 									{'[ download producer stats ]'}
@@ -421,7 +421,7 @@ export default class PeerView extends React.Component
 									{
 										event.stopPropagation();
 
-										onDownloadStats([ audioConsumerId, videoConsumerId ]);
+										onDownloadStats('consumer');
 									}}
 								>
 									{'[ download consumer stats ]'}

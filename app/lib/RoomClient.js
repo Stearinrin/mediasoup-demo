@@ -49,6 +49,10 @@ const SCREEN_SHARING_SVC_ENCODINGS =
 
 const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
 
+// const TOTAL_PRODUCERS = 1;
+
+const TOTAL_CONSUMERS = 2;
+
 const logger = new Logger('RoomClient');
 
 let store;
@@ -238,6 +242,8 @@ export default class RoomClient
 		{
 			e2e.setCryptoKey('setCryptoKey', this._e2eKey, true);
 		}
+
+		this._totalStatsList = [];
 	}
 
 	close()
@@ -397,6 +403,8 @@ export default class RoomClient
 						// If audio-only mode is enabled, pause it.
 						if (consumer.kind === 'video' && store.getState().me.audioOnly)
 							this._pauseConsumer(consumer);
+
+						await this._triggerStatsSync(peerId);
 					}
 					catch (error)
 					{
@@ -604,7 +612,7 @@ export default class RoomClient
 			}
 		});
 
-		this._protoo.on('notification', (notification) =>
+		this._protoo.on('notification', async (notification) =>
 		{
 			logger.debug(
 				'proto "notification" event [method:%s, data:%o]',
@@ -634,6 +642,8 @@ export default class RoomClient
 						{
 							text : `${peer.displayName} has joined the room`
 						}));
+
+					await this._triggerStatsSync();
 
 					break;
 				}
@@ -1662,35 +1672,16 @@ export default class RoomClient
 		}
 	}
 
-	async downloadStats(statsIds)
+	async downloadStats(side)
 	{
+		logger.debug('downloadStats() [side:%s]', side);
+
 		try
 		{
-			logger.debug('downloadStats() [statsIds:%o]', statsIds);
-
 			const now = new Date();
-			let stats = {};
-
-			if (this._produce)
-			{
-				stats = {
-					'audio'     : JSON.stringify(this.getAudioRemoteStats(), null, 2),
-					'video'	    : JSON.stringify(this.getVideoRemoteStats(), null, 2),
-					'timestamp' : now.getTime()
-				};
-			}
-			else (this._consume)
-			{
-				stats = {
-					'audio'     : JSON.stringify(this.getConsumerRemoteStats(statsIds[0]), null, 2),
-					'video'	    : JSON.stringify(this.getConsumerRemoteStats(statsIds[1]), null, 2),
-					'timestamp' : now.getTime()
-				};
-			}
-
-			const blob = new Blob([ JSON.stringify(stats, null, 2) ], { type: 'application/json' });
+			const blob = new Blob([ JSON.stringify(this._totalStatsList, null, 2) ], { type: 'application/json' });
 			const isotime = now.toISOString().replace(/:/g, '-');
-			const filename = `webrtc_mediasoup_stats_${isotime}.json`;
+			const filename = `webrtc_mediasoup_stats_${isotime}_${side}.json`;
 
 			fileDownload(blob, filename);
 		}
@@ -2194,6 +2185,20 @@ export default class RoomClient
 		}
 	}
 
+	async pushTotalStats(stats)
+	{
+		logger.debug('pushTotalStats()');
+
+		try
+		{
+			this._totalStatsList.push(stats);
+		}
+		catch (error)
+		{
+			logger.error('pushTotalStats() | failed:%o', error);
+		}
+	}
+
 	async _joinRoom()
 	{
 		logger.debug('_joinRoom()');
@@ -2405,14 +2410,13 @@ export default class RoomClient
 					sctpCapabilities : this._useDataChannel && this._consume
 						? this._mediasoupDevice.sctpCapabilities
 						: undefined
-				});
+				}
+			);
 
-			store.dispatch(
-				stateActions.setRoomState('connected'));
+			store.dispatch(stateActions.setRoomState('connected'));
 
 			// Clean all the existing notifcations.
-			store.dispatch(
-				stateActions.removeAllNotifications());
+			store.dispatch(stateActions.removeAllNotifications());
 
 			store.dispatch(requestActions.notify(
 				{
@@ -2452,15 +2456,17 @@ export default class RoomClient
 						this.enableBotDataProducer();
 					}
 				});
-			}
 
-			// NOTE: For testing.
-			if (window.SHOW_INFO)
-			{
+				// NOTE: For testing.
+				// To wait until all consumers are joined is better (Consumers -> Producers).
 				const { me } = store.getState();
 
-				store.dispatch(
-					stateActions.setRoomStatsPeerId(me.id));
+				store.dispatch(stateActions.setRoomStatsPeerId(me.id));
+
+				// if (!window.SHOW_INFO)
+				// {
+				// 	store.dispatch(stateActions.setRoomStatsPeerId(null));
+				// }
 			}
 		}
 		catch (error)
@@ -2600,5 +2606,34 @@ export default class RoomClient
 			throw new Error('video.captureStream() not supported');
 
 		return this._externalVideoStream;
+	}
+
+	async _triggerStatsSync(peerId = null)
+	{
+		const currentTotalConsumers = this._consumers.size;
+
+		if (currentTotalConsumers >= TOTAL_CONSUMERS && this._consume)
+		{
+			try
+			{
+				logger.debug('_triggerStatsSync() [currentTotalConsumers:%d] [peerId:%s]',
+					currentTotalConsumers, peerId);
+
+				store.dispatch(stateActions.setRoomStatsPeerId(peerId));
+
+				// if (!window.SHOW_INFO)
+				// {
+				// 	store.dispatch(stateActions.setRoomStatsPeerId(null));
+				// }
+			}
+			catch (error)
+			{
+				logger.error('_triggerStatsSync() | failed:%o', error);
+			}
+		}
+		else
+		{
+			logger.debug('_triggerStatsSync() [currentTotalConsumers:%d]', currentTotalConsumers);
+		}
 	}
 }
