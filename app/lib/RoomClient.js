@@ -2038,7 +2038,7 @@ export default class RoomClient
 
 	async getConsumerRemoteStats(consumerId)
 	{
-		logger.debug('getConsumerRemoteStats()');
+		logger.debug('getConsumerRemoteStats() | [consumerId:"%s"]', consumerId);
 
 		const consumer = this._consumers.get(consumerId);
 
@@ -2076,7 +2076,7 @@ export default class RoomClient
 
 	async getDataConsumerRemoteStats(dataConsumerId)
 	{
-		logger.debug('getDataConsumerRemoteStats()');
+		logger.debug('getDataConsumerRemoteStats() | [dataConsumerId:"%s"]', dataConsumerId);
 
 		const dataConsumer = this._dataConsumers.get(dataConsumerId);
 
@@ -2090,52 +2090,117 @@ export default class RoomClient
 	{
 		logger.debug('getSendTransportLocalStats()');
 
+		const _transport = this._sendTransport;
+
 		if (!this._sendTransport)
 			return;
 
-		return this._sendTransport.getStats();
+		const transport = _transport.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'outbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		return transport;
 	}
 
 	async getRecvTransportLocalStats()
 	{
 		logger.debug('getRecvTransportLocalStats()');
 
+		const _transport = this._recvTransport.getStats();
+
 		if (!this._recvTransport)
 			return;
 
-		return this._recvTransport.getStats();
+		const transport = _transport.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'inbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		return transport;
 	}
 
 	async getAudioLocalStats()
 	{
 		logger.debug('getAudioLocalStats()');
 
-		if (!this._micProducer)
+		const _producer = this._micProducer;
+
+		if (!_producer)
 			return;
 
-		return this._micProducer.getStats();
+		const producer = _producer.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'inbound-rtp' || report.type === 'outbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		return producer;
 	}
 
 	async getVideoLocalStats()
 	{
 		logger.debug('getVideoLocalStats()');
 
-		const producer = this._webcamProducer || this._shareProducer;
+		const _producer = this._webcamProducer || this._shareProducer;
 
-		if (!producer)
+		if (!_producer)
 			return;
 
-		return producer.getStats();
+		const producer = _producer.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'inbound-rtp' || report.type === 'outbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		return producer;
 	}
 
 	async getConsumerLocalStats(consumerId)
 	{
-		const consumer = this._consumers.get(consumerId);
+		logger.debug('getConsumerLocalStats() | [consumerId:"%s"]', consumerId);
 
-		if (!consumer)
+		const _consumer = this._consumers.get(consumerId);
+
+		if (!_consumer)
 			return;
 
-		return consumer.getStats();
+		const consumer = _consumer.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'inbound-rtp' || report.type === 'outbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		logger.debug(consumer);
+
+		return consumer;
 	}
 
 	async applyNetworkThrottle({ uplink, downlink, rtt, secret })

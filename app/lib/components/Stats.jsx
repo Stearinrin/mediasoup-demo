@@ -282,7 +282,7 @@ class Stats extends React.Component
 	{
 		const {
 			roomClient,
-			// isMe,
+			isMe,
 			audioConsumerId,
 			videoConsumerId,
 			chatDataConsumerId,
@@ -307,7 +307,7 @@ class Stats extends React.Component
 		let botDataConsumerRemoteStats = null;
 		let totalStats = null;
 
-		// if (isMe)
+		if (isMe)
 		{
 			sendTransportRemoteStats = await roomClient.getSendTransportRemoteStats()
 				.catch(() => {});
@@ -339,9 +339,21 @@ class Stats extends React.Component
 			botDataProducerRemoteStats = await roomClient.getBotDataProducerRemoteStats()
 				.catch(() => {});
 
-			// }
-			// else
-			// {
+			totalStats = {
+				sendTransportRemoteStats,
+				sendTransportLocalStats,
+				recvTransportRemoteStats,
+				recvTransportLocalStats,
+				audioProducerRemoteStats,
+				audioProducerLocalStats,
+				videoProducerRemoteStats,
+				videoProducerLocalStats,
+				chatDataProducerRemoteStats,
+				botDataProducerRemoteStats
+			};
+		}
+		else
+		{
 			audioConsumerRemoteStats = await roomClient.getConsumerRemoteStats(audioConsumerId)
 				.catch(() => {});
 
@@ -363,22 +375,12 @@ class Stats extends React.Component
 					.catch(() => {});
 
 			totalStats = {
-				// sendTransportRemoteStats,
-				// sendTransportLocalStats,
-				// recvTransportRemoteStats,
-				// recvTransportLocalStats,
-				audioProducerRemoteStats,
-				audioProducerLocalStats,
-				videoProducerRemoteStats,
-				videoProducerLocalStats,
-				// chatDataProducerRemoteStats,
-				// botDataProducerRemoteStats,
 				audioConsumerRemoteStats,
 				audioConsumerLocalStats,
 				videoConsumerRemoteStats,
-				videoConsumerLocalStats
-				// chatDataConsumerRemoteStats,
-				// botDataConsumerRemoteStats
+				videoConsumerLocalStats,
+				chatDataConsumerRemoteStats,
+				botDataConsumerRemoteStats
 			};
 		}
 
