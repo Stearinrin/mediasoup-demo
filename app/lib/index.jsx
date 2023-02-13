@@ -79,6 +79,7 @@ async function run()
 	const externalVideo = urlParser.query.externalVideo === 'true';
 	const throttleSecret = urlParser.query.throttleSecret;
 	const e2eKey = urlParser.query.e2eKey;
+	const consumerReplicas = urlParser.query.consumerReplicas;
 
 	// Enable face detection on demand.
 	if (faceDetection)
@@ -129,6 +130,7 @@ async function run()
 			case 'externalVideo':
 			case 'throttleSecret':
 			case 'e2eKey':
+			case 'consumerReplicas':
 				break;
 
 			default:
@@ -182,7 +184,8 @@ async function run()
 			svc,
 			datachannel,
 			externalVideo,
-			e2eKey
+			e2eKey,
+			consumerReplicas
 		});
 
 	// NOTE: For debugging.

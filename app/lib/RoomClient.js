@@ -23,9 +23,9 @@ const PC_PROPRIETARY_CONSTRAINTS =
 // Used for simulcast webcam video.
 const WEBCAM_SIMULCAST_ENCODINGS =
 [
-	{ scaleResolutionDownBy: 4, maxBitrate: 500000 },
-	{ scaleResolutionDownBy: 2, maxBitrate: 1000000 },
-	{ scaleResolutionDownBy: 1, maxBitrate: 5000000 }
+	{ scaleResolutionDownBy: 4, maxBitrate: 500000, scalabilityMode: 'S1T2' },
+	{ scaleResolutionDownBy: 2, maxBitrate: 1000000, scalabilityMode: 'S1T2' },
+	{ scaleResolutionDownBy: 1, maxBitrate: 5000000, scalabilityMode: 'S1T2' }
 ];
 
 // Used for VP9 webcam video.
@@ -85,7 +85,8 @@ export default class RoomClient
 			svc,
 			datachannel,
 			externalVideo,
-			e2eKey
+			e2eKey,
+			consumerReplicas
 		}
 	)
 	{
@@ -171,7 +172,7 @@ export default class RoomClient
 
 		// Protoo URL.
 		// @type {String}
-		this._protooUrl = getProtooUrl({ roomId, peerId });
+		this._protooUrl = getProtooUrl({ roomId, peerId, consumerReplicas });
 
 		// protoo-client Peer instance.
 		// @type {protooClient.Peer}
