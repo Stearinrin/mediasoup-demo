@@ -515,4 +515,50 @@ gulp.task('devel:svctest', gulp.series(
 	}
 ));
 
+gulp.task('devel:external', gulp.series(
+	'browser:base',
+	async (done) =>
+	{
+		const config = require('../server/config');
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('producer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel&info=true&_throttleSecret=foo&consume=false&forceVP9=true&svc=L3T3&externalVideo=true',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('consumer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel&info=true&_throttleSecret=foo&produce=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		done();
+	}
+));
+
 gulp.task('default', gulp.series('dist'));

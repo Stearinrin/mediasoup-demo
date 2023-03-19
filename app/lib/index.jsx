@@ -75,6 +75,7 @@ async function run()
 	const svc = urlParser.query.svc;
 	const datachannel = urlParser.query.datachannel !== 'false';
 	const info = urlParser.query.info === 'true';
+	const record = urlParser.query.record === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
 	const throttleSecret = urlParser.query.throttleSecret;
@@ -126,6 +127,7 @@ async function run()
 			case 'svc':
 			case 'datachannel':
 			case 'info':
+			case 'record':
 			case 'faceDetection':
 			case 'externalVideo':
 			case 'throttleSecret':
@@ -183,6 +185,12 @@ async function run()
 			forceVP9,
 			svc,
 			datachannel,
+			enableWebcamLayers,
+			enableSharingLayers,
+			webcamScalabilityMode,
+			sharingScalabilityMode,
+			numSimulcastStreams,
+			record,
 			externalVideo,
 			e2eKey,
 			consumerReplicas

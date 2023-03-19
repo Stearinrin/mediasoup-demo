@@ -99,7 +99,7 @@ export default class PeerView extends React.Component
 
 		return (
 			<div data-component='PeerView'>
-				<div className='info'>
+				{/* <div className='info'>
 					<div className='icons'>
 						<div
 							className={classnames('icon', 'info', { on: showInfo })}
@@ -465,7 +465,7 @@ export default class PeerView extends React.Component
 							</span>
 						</div>
 					</div>
-				</div>
+				</div> */}
 
 				<video
 					ref='videoElem'
