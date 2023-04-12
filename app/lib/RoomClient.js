@@ -20,6 +20,33 @@ const PC_PROPRIETARY_CONSTRAINTS =
 	// optional : [ { googDscp: true } ]
 };
 
+// Used for simulcast webcam video.
+const WEBCAM_SIMULCAST_ENCODINGS =
+[
+	{ scaleResolutionDownBy: 4, maxBitrate: 500000, scalabilityMode: 'S1T2' },
+	{ scaleResolutionDownBy: 2, maxBitrate: 1000000, scalabilityMode: 'S1T2' },
+	{ scaleResolutionDownBy: 1, maxBitrate: 5000000, scalabilityMode: 'S1T2' }
+];
+
+// Used for VP9 webcam video.
+const WEBCAM_KSVC_ENCODINGS =
+[
+	{ scalabilityMode: 'S3T3_KEY' }
+];
+
+// Used for simulcast screen sharing.
+const SCREEN_SHARING_SIMULCAST_ENCODINGS =
+[
+	{ dtx: true, maxBitrate: 1500000 },
+	{ dtx: true, maxBitrate: 6000000 }
+];
+
+// Used for VP9 screen sharing.
+const SCREEN_SHARING_SVC_ENCODINGS =
+[
+	{ scalabilityMode: 'S3T3', dtx: true }
+];
+
 const EXTERNAL_VIDEO_SRC = '/resources/videos/HDR-CX900.mp4';
 
 // const TOTAL_PRODUCERS = 1;
@@ -2841,14 +2868,14 @@ export default class RoomClient
 		let chunks = [];
 		let recorder;
 		
-			// stream = await navigator.mediaDevices.getUserMedia({
-			// 	audio: true,
-			// 	video: true
-			// }).then((stream) => {
-			// 	return stream;
-			// }).catch((err) => {
-			// 	logger.error('_startRecording() | recording failed: %o', err);
-			// });
+		// stream = await navigator.mediaDevices.getUserMedia({
+		// 	audio: true,
+		// 	video: true
+		// }).then((stream) => {
+		// 	return stream;
+		// }).catch((err) => {
+		// 	logger.error('_startRecording() | recording failed: %o', err);
+		// });
 
 		let videoTracks = [];
 		this._consumers.forEach((consumer) => {
@@ -2857,7 +2884,7 @@ export default class RoomClient
 		});
 		// videoStream = this._consumers.getRtcPeerConnection();
 		videoStream = new MediaStream(videoTracks);
-		
+
 		recorder = new MediaRecorder(videoStream);
 		// try {
 		// 	logger.debug("videoStream %o", videoStream);

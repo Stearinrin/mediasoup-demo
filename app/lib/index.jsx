@@ -180,7 +180,7 @@ async function run()
 			peerId,
 			displayName,
 			device,
-			handlerName : handlerName,
+			handlerName,
 			forceTcp,
 			produce,
 			consume,
