@@ -371,7 +371,7 @@ gulp.task('devel:vp9', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&consume=false',
+					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&enableWebcamLayers=true&webcamScalabilityMode=L3T3&consume=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -389,7 +389,7 @@ gulp.task('devel:vp9', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&produce=false',
+					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&enableWebcamLayers=true&webcamScalabilityMode=L3T3&produce=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -417,7 +417,7 @@ gulp.task('devel:h264', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&consume=false&useSimulcast=true&svc=false',
+					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&consume=false&enableWebcamLayers=true&numSimulcastStreams=3',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -435,7 +435,7 @@ gulp.task('devel:h264', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&produce=false&useSimulcast=true&svc=false',
+					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&produce=false&enableWebcamLayers=true&numSimulcastStreams=3',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -463,7 +463,7 @@ gulp.task('devel:svctest', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:svctest&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&consume=false',
+					startPath : '/?roomId=devel:svctest&info=true&_throttleSecret=foo&forceVP9=true&enableWebcamLayers=true&webcamScalabilityMode=L3T3&consume=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -481,7 +481,7 @@ gulp.task('devel:svctest', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:svctest&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&produce=false',
+					startPath : '/?roomId=devel:svctest&info=true&_throttleSecret=foo&produce=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -499,7 +499,7 @@ gulp.task('devel:svctest', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:svctest&info=true&_throttleSecret=foo&forceVP9=true&svc=S3T3&produce=false',
+					startPath : '/?roomId=devel:svctest&info=true&_throttleSecret=foo&produce=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -527,7 +527,7 @@ gulp.task('devel:external', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel&info=true&_throttleSecret=foo&consume=false&forceVP9=true&svc=L3T3&externalVideo=true',
+					startPath : '/?roomId=devel&info=true&_throttleSecret=foo&consume=false&forceVP9=true&enableWebcamLayers=true&webcamScalabilityMode=L3T3&externalVideo=true',
 					server    :
 					{
 						baseDir : OUTPUT_DIR

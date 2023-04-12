@@ -47,7 +47,7 @@ const SCREEN_SHARING_SVC_ENCODINGS =
 	{ scalabilityMode: 'S3T3', dtx: true }
 ];
 
-const EXTERNAL_VIDEO_SRC = '/resources/videos/HDR-CX900.mp4';
+const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
 
 // const TOTAL_PRODUCERS = 1;
 
@@ -145,7 +145,7 @@ export default class RoomClient
 		this._forceVP9 = Boolean(forceVP9);
 
 		// Recording.
-		this._recording = Boolean(record);
+		// this._recording = Boolean(record);
 
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
@@ -198,7 +198,7 @@ export default class RoomClient
 
 		// Protoo URL.
 		// @type {String}
-		this._protooUrl = getProtooUrl({ roomId, peerId, consumerReplicas, record });
+		this._protooUrl = getProtooUrl({ roomId, peerId, consumerReplicas });
 
 		// protoo-client Peer instance.
 		// @type {protooClient.Peer}
@@ -428,15 +428,13 @@ export default class RoomClient
 						if (consumer.kind === 'video' && store.getState().me.audioOnly)
 							this._pauseConsumer(consumer);
 
-						await this._triggerStatsSync(peerId);
-						
 						// Recording.
 						if (this._recording)
 						{
 							await this._startRecording();
 						}
 
-						await this._triggerStatsSync(peerId);
+						// await this._triggerStatsSync(peerId);
 					}
 					catch (error)
 					{
@@ -2840,14 +2838,14 @@ export default class RoomClient
 		let chunks = [];
 		let recorder;
 		
-			// stream = await navigator.mediaDevices.getUserMedia({
-			// 	audio: true,
-			// 	video: true
-			// }).then((stream) => {
-			// 	return stream;
-			// }).catch((err) => {
-			// 	logger.error('_startRecording() | recording failed: %o', err);
-			// });
+		// stream = await navigator.mediaDevices.getUserMedia({
+		// 	audio: true,
+		// 	video: true
+		// }).then((stream) => {
+		// 	return stream;
+		// }).catch((err) => {
+		// 	logger.error('_startRecording() | recording failed: %o', err);
+		// });
 
 		let videoTracks = [];
 		this._consumers.forEach((consumer) => {
@@ -2856,7 +2854,7 @@ export default class RoomClient
 		});
 		// videoStream = this._consumers.getRtcPeerConnection();
 		videoStream = new MediaStream(videoTracks);
-		
+
 		recorder = new MediaRecorder(videoStream);
 		// try {
 		// 	logger.debug("videoStream %o", videoStream);
@@ -2905,35 +2903,6 @@ export default class RoomClient
 			logger.debug('_startRecording() | recording started');
 
 			setTimeout(() => recorder.stop(), 10000);
-		}
-	}
-
-	async _triggerStatsSync(peerId = null)
-	{
-		const currentTotalConsumers = this._consumers.size;
-
-		if (currentTotalConsumers >= TOTAL_CONSUMERS && this._consume)
-		{
-			try
-			{
-				logger.debug('_triggerStatsSync() [currentTotalConsumers:%d] [peerId:%s]',
-					currentTotalConsumers, peerId);
-
-				store.dispatch(stateActions.setRoomStatsPeerId(peerId));
-
-				// if (!window.SHOW_INFO)
-				// {
-				// 	store.dispatch(stateActions.setRoomStatsPeerId(null));
-				// }
-			}
-			catch (error)
-			{
-				logger.error('_triggerStatsSync() | failed:%o', error);
-			}
-		}
-		else
-		{
-			logger.debug('_triggerStatsSync() [currentTotalConsumers:%d]', currentTotalConsumers);
 		}
 	}
 }
