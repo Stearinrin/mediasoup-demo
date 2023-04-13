@@ -810,9 +810,9 @@ class Room extends EventEmitter
 		{
 			const { producer, volume } = volumes[0];
 
-			// logger.debug(
-			// 	'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
-			// 	producer.id, volume);
+			logger.debug(
+				'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
+				producer.id, volume);
 
 			// Notify all Peers.
 			for (const peer of this._getJoinedPeers())
@@ -829,7 +829,7 @@ class Room extends EventEmitter
 
 		this._audioLevelObserver.on('silence', () =>
 		{
-			// logger.debug('audioLevelObserver "silence" event');
+			logger.debug('audioLevelObserver "silence" event');
 
 			// Notify all Peers.
 			for (const peer of this._getJoinedPeers())
@@ -1497,8 +1497,9 @@ class Room extends EventEmitter
 				const DefaultUplink = 1000000;
 				const DefaultDownlink = 1000000;
 				const DefaultRtt = 0;
+				const DefaultPacketLoss = 0;
 
-				const { uplink, downlink, rtt, secret } = request.data;
+				const { secret, uplink, downlink, rtt, packetLoss } = request.data;
 
 				if (!secret || secret !== process.env.NETWORK_THROTTLE_SECRET)
 				{
@@ -1511,16 +1512,18 @@ class Room extends EventEmitter
 				{
 					await throttle.start(
 						{
-							up   : uplink || DefaultUplink,
-							down : downlink || DefaultDownlink,
-							rtt  : rtt || DefaultRtt
+							up         : uplink || DefaultUplink,
+							down       : downlink || DefaultDownlink,
+							rtt        : rtt || DefaultRtt,
+							packetLoss : packetLoss || DefaultPacketLoss
 						});
 
 					logger.warn(
-						'network throttle set [uplink:%s, downlink:%s, rtt:%s]',
+						'network throttle set [uplink:%s, downlink:%s, rtt:%s, packetLoss:%s]',
 						uplink || DefaultUplink,
 						downlink || DefaultDownlink,
-						rtt || DefaultRtt);
+						rtt || DefaultRtt,
+						packetLoss || DefaultPacketLoss);
 
 					accept();
 				}
@@ -1643,6 +1646,8 @@ class Room extends EventEmitter
 							{
 								producerId      : producer.id,
 								rtpCapabilities : consumerPeer.data.rtpCapabilities,
+								// Enable NACK for OPUS.
+								enableRtx       : true,
 								paused          : true
 							});
 					}

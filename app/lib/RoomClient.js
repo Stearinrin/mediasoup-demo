@@ -17,35 +17,8 @@ const VIDEO_CONSTRAINS =
 
 const PC_PROPRIETARY_CONSTRAINTS =
 {
-	optional : [ { googDscp: true } ]
+	// optional : [ { googDscp: true } ]
 };
-
-// Used for simulcast webcam video.
-const WEBCAM_SIMULCAST_ENCODINGS =
-[
-	{ scaleResolutionDownBy: 4, maxBitrate: 500000, scalabilityMode: 'S1T2' },
-	{ scaleResolutionDownBy: 2, maxBitrate: 1000000, scalabilityMode: 'S1T2' },
-	{ scaleResolutionDownBy: 1, maxBitrate: 5000000, scalabilityMode: 'S1T2' }
-];
-
-// Used for VP9 webcam video.
-const WEBCAM_KSVC_ENCODINGS =
-[
-	{ scalabilityMode: 'S3T3_KEY' }
-];
-
-// Used for simulcast screen sharing.
-const SCREEN_SHARING_SIMULCAST_ENCODINGS =
-[
-	{ dtx: true, maxBitrate: 1500000 },
-	{ dtx: true, maxBitrate: 6000000 }
-];
-
-// Used for VP9 screen sharing.
-const SCREEN_SHARING_SVC_ENCODINGS =
-[
-	{ scalabilityMode: 'S3T3', dtx: true }
-];
 
 const EXTERNAL_VIDEO_SRC = '/resources/videos/HDR-CX900.mp4';
 
@@ -77,15 +50,12 @@ export default class RoomClient
 			displayName,
 			device,
 			handlerName,
-			useSimulcast,
-			useSharingSimulcast,
 			forceTcp,
 			produce,
 			consume,
+			forceVP8,
 			forceH264,
 			forceVP9,
-			svc,
-			datachannel,
 			enableWebcamLayers,
 			enableSharingLayers,
 			webcamScalabilityMode,
@@ -115,6 +85,11 @@ export default class RoomClient
 		// @type {Object}
 		this._device = device;
 
+		// Custom mediasoup-client handler name (to override default browser
+		// detection if desired).
+		// @type {String}
+		this._handlerName = handlerName;
+
 		// Whether we want to force RTC over TCP.
 		// @type {Boolean}
 		this._forceTcp = forceTcp;
@@ -129,12 +104,18 @@ export default class RoomClient
 
 		// Whether we want DataChannels.
 		// @type {Boolean}
-		this._useDataChannel = datachannel;
+		// this._useDataChannel = Boolean(datachannel);
+
+		// Force VP8 codec for sending.
+		// @type {Boolean}
+		this._forceVP8 = Boolean(forceVP8);
 
 		// Force H264 codec for sending.
+		// @type {Boolean}
 		this._forceH264 = Boolean(forceH264);
 
 		// Force VP9 codec for sending.
+		// @type {Boolean}
 		this._forceVP9 = Boolean(forceVP9);
 
 		// Recording.
@@ -191,19 +172,6 @@ export default class RoomClient
 			this._externalVideo.play()
 				.catch((error) => logger.warn('externalVideo.play() failed:%o', error));
 		}
-
-		// Custom mediasoup-client handler name (to override default browser
-		// detection if desired).
-		// @type {String}
-		this._handlerName = handlerName;
-
-		// Whether simulcast should be used.
-		// @type {Boolean}
-		this._useSimulcast = useSimulcast;
-
-		// Whether simulcast should be used in desktop sharing.
-		// @type {Boolean}
-		this._useSharingSimulcast = useSharingSimulcast;
 
 		// Protoo URL.
 		// @type {String}
@@ -266,13 +234,6 @@ export default class RoomClient
 			device     : null,
 			resolution : 'hd'
 		};
-
-		// Set custom SVC scalability mode.
-		if (svc)
-		{
-			WEBCAM_KSVC_ENCODINGS[0].scalabilityMode = `${svc}_KEY`;
-			SCREEN_SHARING_SVC_ENCODINGS[0].scalabilityMode = svc;
-		}
 
 		if (this._e2eKey && e2e.isSupported())
 		{
@@ -883,8 +844,10 @@ export default class RoomClient
 					track,
 					codecOptions :
 					{
-						opusStereo : 1,
-						opusDtx    : 1
+						opusStereo : true,
+						opusDtx    : true,
+						opusFec    : true,
+						opusNack   : true
 					}
 					// NOTE: for testing codec selection.
 					// codec : this._mediasoupDevice.rtpCapabilities.codecs
@@ -1081,7 +1044,17 @@ export default class RoomClient
 				videoGoogleStartBitrate : 1000
 			};
 
-			if (this._forceH264)
+			if (this._forceVP8)
+			{
+				codec = this._mediasoupDevice.rtpCapabilities.codecs
+					.find((c) => c.mimeType.toLowerCase() === 'video/vp8');
+
+				if (!codec)
+				{
+					throw new Error('desired VP8 codec+configuration is not supported');
+				}
+			}
+			else if (this._forceH264)
 			{
 				codec = this._mediasoupDevice.rtpCapabilities.codecs
 					.find((c) => c.mimeType.toLowerCase() === 'video/h264');
@@ -1102,7 +1075,7 @@ export default class RoomClient
 				}
 			}
 
-			if (this._useSimulcast)
+			if (this._enableWebcamLayers)
 			{
 				// If VP9 is the only available video codec then use SVC.
 				const firstVideoCodec = this._mediasoupDevice
@@ -1110,16 +1083,53 @@ export default class RoomClient
 					.codecs
 					.find((c) => c.kind === 'video');
 
+				// VP9 with SVC.
 				if (
 					(this._forceVP9 && codec) ||
 					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
 				)
 				{
-					encodings = WEBCAM_KSVC_ENCODINGS;
+					encodings =
+					[
+						{
+							maxBitrate      : 5000000,
+							scalabilityMode : this._webcamScalabilityMode || 'L3T3_KEY'
+						}
+					];
 				}
+				// VP8 or H264 with simulcast.
 				else
 				{
-					encodings = WEBCAM_SIMULCAST_ENCODINGS;
+					encodings =
+					[
+						{
+							scaleResolutionDownBy : 1,
+							maxBitrate            : 5000000,
+							scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
+						}
+					];
+
+					if (this._numSimulcastStreams > 1)
+					{
+						encodings.unshift(
+							{
+								scaleResolutionDownBy : 2,
+								maxBitrate            : 1000000,
+								scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
+							}
+						);
+					}
+
+					if (this._numSimulcastStreams > 2)
+					{
+						encodings.unshift(
+							{
+								scaleResolutionDownBy : 4,
+								maxBitrate            : 500000,
+								scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
+							}
+						);
+					}
 				}
 			}
 
@@ -1396,7 +1406,17 @@ export default class RoomClient
 				videoGoogleStartBitrate : 1000
 			};
 
-			if (this._forceH264)
+			if (this._forceVP8)
+			{
+				codec = this._mediasoupDevice.rtpCapabilities.codecs
+					.find((c) => c.mimeType.toLowerCase() === 'video/vp8');
+
+				if (!codec)
+				{
+					throw new Error('desired VP8 codec+configuration is not supported');
+				}
+			}
+			else if (this._forceH264)
 			{
 				codec = this._mediasoupDevice.rtpCapabilities.codecs
 					.find((c) => c.mimeType.toLowerCase() === 'video/h264');
@@ -1417,7 +1437,7 @@ export default class RoomClient
 				}
 			}
 
-			if (this._useSharingSimulcast)
+			if (this._enableSharingLayers)
 			{
 				// If VP9 is the only available video codec then use SVC.
 				const firstVideoCodec = this._mediasoupDevice
@@ -1425,17 +1445,57 @@ export default class RoomClient
 					.codecs
 					.find((c) => c.kind === 'video');
 
+				// VP9 with SVC.
 				if (
 					(this._forceVP9 && codec) ||
 					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
 				)
 				{
-					encodings = SCREEN_SHARING_SVC_ENCODINGS;
+					encodings =
+					[
+						{
+							maxBitrate      : 5000000,
+							scalabilityMode : this._sharingScalabilityMode || 'L3T3',
+							dtx             : true
+						}
+					];
 				}
+				// VP8 or H264 with simulcast.
 				else
 				{
-					encodings = SCREEN_SHARING_SIMULCAST_ENCODINGS
-						.map((encoding) => ({ ...encoding, dtx: true }));
+					encodings =
+					[
+						{
+							scaleResolutionDownBy : 1,
+							maxBitrate            : 5000000,
+							scalabilityMode       : this._sharingScalabilityMode || 'L1T3',
+							dtx                   : true
+						}
+					];
+
+					if (this._numSimulcastStreams > 1)
+					{
+						encodings.unshift(
+							{
+								scaleResolutionDownBy : 2,
+								maxBitrate            : 1000000,
+								scalabilityMode       : this._sharingScalabilityMode || 'L1T3',
+								dtx                   : true
+							}
+						);
+					}
+
+					if (this._numSimulcastStreams > 2)
+					{
+						encodings.unshift(
+							{
+								scaleResolutionDownBy : 4,
+								maxBitrate            : 500000,
+								scalabilityMode       : this._sharingScalabilityMode || 'L1T3',
+								dtx                   : true
+							}
+						);
+					}
 				}
 			}
 
@@ -2263,17 +2323,17 @@ export default class RoomClient
 		return consumer;
 	}
 
-	async applyNetworkThrottle({ uplink, downlink, rtt, secret })
+	async applyNetworkThrottle({ uplink, downlink, rtt, secret, packetLoss })
 	{
 		logger.debug(
-			'applyNetworkThrottle() [uplink:%s, downlink:%s, rtt:%s]',
-			uplink, downlink, rtt);
+			'applyNetworkThrottle() [uplink:%s, downlink:%s, rtt:%s, packetLoss:%s]',
+			uplink, downlink, rtt, packetLoss);
 
 		try
 		{
 			await this._protoo.request(
 				'applyNetworkThrottle',
-				{ uplink, downlink, rtt, secret });
+				{ secret, uplink, downlink, rtt, packetLoss });
 		}
 		catch (error)
 		{

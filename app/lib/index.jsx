@@ -65,21 +65,19 @@ async function run()
 	let displayName =
 		urlParser.query.displayName || (cookiesManager.getUser() || {}).displayName;
 	const handlerName = urlParser.query.handlerName || urlParser.query.handler;
-	const useSimulcast = urlParser.query.simulcast !== 'false';
-	const useSharingSimulcast = urlParser.query.sharingSimulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
 	const produce = urlParser.query.produce !== 'false';
 	const consume = urlParser.query.consume !== 'false';
+	const datachannel = urlParser.query.datachannel !== 'false';
+	const forceVP8 = urlParser.query.forceVP8 === 'true';
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
 	const enableWebcamLayers = urlParser.query.enableWebcamLayers !== 'false';
-	const enableSharingLayers = urlParser.query.enableScreenSharingLayers !== 'false';
+	const enableSharingLayers = urlParser.query.enableSharingLayers !== 'false';
 	const webcamScalabilityMode = urlParser.query.webcamScalabilityMode;
 	const sharingScalabilityMode = urlParser.query.sharingScalabilityMode;
 	const numSimulcastStreams = urlParser.query.numSimulcastStreams ?
 		Number(urlParser.query.numSimulcastStreams) : 3;
-	const svc = urlParser.query.svc;
-	const datachannel = urlParser.query.datachannel !== 'false';
 	const info = urlParser.query.info === 'true';
 	const record = urlParser.query.record === 'true';
 	const stat = urlParser.query.stat === 'true';
@@ -183,15 +181,12 @@ async function run()
 			displayName,
 			device,
 			handlerName : handlerName,
-			useSimulcast,
-			useSharingSimulcast,
 			forceTcp,
 			produce,
 			consume,
+			forceVP8,
 			forceH264,
 			forceVP9,
-			svc,
-			datachannel,
 			enableWebcamLayers,
 			enableSharingLayers,
 			webcamScalabilityMode,
