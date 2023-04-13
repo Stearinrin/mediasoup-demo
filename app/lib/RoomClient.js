@@ -84,6 +84,15 @@ export default class RoomClient
 			consume,
 			forceH264,
 			forceVP9,
+			svc,
+			datachannel,
+			enableWebcamLayers,
+			enableSharingLayers,
+			webcamScalabilityMode,
+			sharingScalabilityMode,
+			numSimulcastStreams,
+			record,
+			stat,
 			externalVideo,
 			e2eKey,
 			consumerReplicas
@@ -130,6 +139,9 @@ export default class RoomClient
 
 		// Recording.
 		this._recording = Boolean(record);
+
+		// Stat.
+		this._stat = Boolean(stat);
 
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
@@ -195,7 +207,7 @@ export default class RoomClient
 
 		// Protoo URL.
 		// @type {String}
-		this._protooUrl = getProtooUrl({ roomId, peerId, consumerReplicas, record });
+		this._protooUrl = getProtooUrl({ roomId, peerId, consumerReplicas });
 
 		// protoo-client Peer instance.
 		// @type {protooClient.Peer}
@@ -432,15 +444,16 @@ export default class RoomClient
 						if (consumer.kind === 'video' && store.getState().me.audioOnly)
 							this._pauseConsumer(consumer);
 
-						await this._triggerStatsSync(peerId);
-						
 						// Recording.
 						if (this._recording)
 						{
 							await this._startRecording();
 						}
-
-						await this._triggerStatsSync(peerId);
+						
+						if (this._stat)
+						{
+							await this._triggerStatsSync(peerId);
+						}
 					}
 					catch (error)
 					{
@@ -679,7 +692,10 @@ export default class RoomClient
 							text : `${peer.displayName} has joined the room`
 						}));
 
-					await this._triggerStatsSync();
+					// if (this._stat)
+					// {
+					// 	await this._triggerStatsSync();
+					// }
 
 					break;
 				}
@@ -1710,8 +1726,16 @@ export default class RoomClient
 
 	async downloadStats(side)
 	{
+		if (!side)
+		{
+			if (this._consume === false && this._produce === false) side = 'none';
+			else if (this._produce === false) side = 'consumer';
+			else if (this._consume === false) side = 'producer';
+			else side = 'both';
+		}
+		
 		logger.debug('downloadStats() [side:%s]', side);
-
+		
 		try
 		{
 			const now = new Date();
@@ -2288,11 +2312,20 @@ export default class RoomClient
 
 	async pushTotalStats(stats)
 	{
-		logger.debug('pushTotalStats()');
-
-		try
+				try
 		{
-			this._totalStatsList.push(stats);
+			// Avoid memory leaks by fooling.
+			if (this._totalStatsList.length < 100)
+			{
+				logger.debug('pushTotalStats()');
+
+				this._totalStatsList.push(stats);
+			}
+			
+			if (this._totalStatsList.length == 30)
+			{
+				this.downloadStats();
+			}
 		}
 		catch (error)
 		{
@@ -2562,7 +2595,10 @@ export default class RoomClient
 				// To wait until all consumers are joined is better (Consumers -> Producers).
 				const { me } = store.getState();
 
-				store.dispatch(stateActions.setRoomStatsPeerId(me.id));
+				if (this._stat)
+				{
+					store.dispatch(stateActions.setRoomStatsPeerId(me.id));
+				}
 
 				// if (!window.SHOW_INFO)
 				// {
@@ -2810,35 +2846,6 @@ export default class RoomClient
 			logger.debug('_startRecording() | recording started');
 
 			setTimeout(() => recorder.stop(), 10000);
-		}
-	}
-
-	async _triggerStatsSync(peerId = null)
-	{
-		const currentTotalConsumers = this._consumers.size;
-
-		if (currentTotalConsumers >= TOTAL_CONSUMERS && this._consume)
-		{
-			try
-			{
-				logger.debug('_triggerStatsSync() [currentTotalConsumers:%d] [peerId:%s]',
-					currentTotalConsumers, peerId);
-
-				store.dispatch(stateActions.setRoomStatsPeerId(peerId));
-
-				// if (!window.SHOW_INFO)
-				// {
-				// 	store.dispatch(stateActions.setRoomStatsPeerId(null));
-				// }
-			}
-			catch (error)
-			{
-				logger.error('_triggerStatsSync() | failed:%o', error);
-			}
-		}
-		else
-		{
-			logger.debug('_triggerStatsSync() [currentTotalConsumers:%d]', currentTotalConsumers);
 		}
 	}
 }

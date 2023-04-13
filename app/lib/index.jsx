@@ -72,10 +72,17 @@ async function run()
 	const consume = urlParser.query.consume !== 'false';
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
+	const enableWebcamLayers = urlParser.query.enableWebcamLayers !== 'false';
+	const enableSharingLayers = urlParser.query.enableScreenSharingLayers !== 'false';
+	const webcamScalabilityMode = urlParser.query.webcamScalabilityMode;
+	const sharingScalabilityMode = urlParser.query.sharingScalabilityMode;
+	const numSimulcastStreams = urlParser.query.numSimulcastStreams ?
+		Number(urlParser.query.numSimulcastStreams) : 3;
 	const svc = urlParser.query.svc;
 	const datachannel = urlParser.query.datachannel !== 'false';
 	const info = urlParser.query.info === 'true';
 	const record = urlParser.query.record === 'true';
+	const stat = urlParser.query.stat === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
 	const throttleSecret = urlParser.query.throttleSecret;
@@ -112,32 +119,32 @@ async function run()
 	for (const key of Object.keys(roomUrlParser.query))
 	{
 		// Don't keep some custom params.
-		switch (key)
-		{
-			case 'roomId':
-			case 'handlerName':
-			case 'handler':
-			case 'simulcast':
-			case 'sharingSimulcast':
-			case 'produce':
-			case 'consume':
-			case 'forceH264':
-			case 'forceVP9':
-			case 'forceTcp':
-			case 'svc':
-			case 'datachannel':
-			case 'info':
-			case 'record':
-			case 'faceDetection':
-			case 'externalVideo':
-			case 'throttleSecret':
-			case 'e2eKey':
-			case 'consumerReplicas':
-				break;
+		// switch (key)
+		// {
+		// 	case 'roomId':
+		// 	case 'handlerName':
+		// 	case 'handler':
+		// 	case 'simulcast':
+		// 	case 'sharingSimulcast':
+		// 	case 'produce':
+		// 	case 'consume':
+		// 	case 'forceH264':
+		// 	case 'forceVP9':
+		// 	case 'forceTcp':
+		// 	case 'svc':
+		// 	case 'datachannel':
+		// 	case 'info':
+		// 	case 'record':
+		// 	case 'faceDetection':
+		// 	case 'externalVideo':
+		// 	case 'throttleSecret':
+		// 	case 'e2eKey':
+		// 	case 'consumerReplicas':
+		// 		break;
 
-			default:
-				delete roomUrlParser.query[key];
-		}
+		// 	default:
+		// 		delete roomUrlParser.query[key];
+		// }
 	}
 	delete roomUrlParser.hash;
 
@@ -191,6 +198,7 @@ async function run()
 			sharingScalabilityMode,
 			numSimulcastStreams,
 			record,
+			stat,
 			externalVideo,
 			e2eKey,
 			consumerReplicas

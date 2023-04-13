@@ -490,7 +490,7 @@ export default class PeerView extends React.Component
 					controls={false}
 				/>
 
-				<canvas
+				{/* <canvas
 					ref='canvas'
 					className={classnames('face-detection', { 'is-me': isMe })}
 				/>
@@ -507,7 +507,7 @@ export default class PeerView extends React.Component
 
 				<If condition={videoElemPaused}>
 					<div className='video-elem-paused' />
-				</If>
+				</If> */}
 			</div>
 		);
 	}
