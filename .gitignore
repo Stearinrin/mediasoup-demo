@@ -9,4 +9,8 @@ node_modules/
 /.vscode/
 
 .node-version
+.tool-versions
 yarn.lock
+
+/scripts/*
+!/scripts/producer.py

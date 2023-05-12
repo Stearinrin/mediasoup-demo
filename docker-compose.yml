@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  mediaserver:
+    image: 'mediasoup-demo-server:latest'
+    container_name: 'ms-server'
+    hostname: 'ms-server'
+    build: ./server/
+    environment:
+      - MEDIASOUP_ANNOUNCED_IP=
+    networks:
+      mediasoup-network:
+        ipv4_address: 10.0.0.11
+    ports:
+      # Media streaming port (UDP).
+      - '44444-44449:44444-44449/udp'
+      # WebSocket API and signaling (HTTPS).
+      - '4443:4443/tcp'
+      # iperf3 (testing only).
+      - '5201:5201/tcp'
+      - '5201:5201/udp'
+
+  webapp:
+    image: 'mediasoup-demo-client:latest'
+    container_name: 'ms-client'
+    hostname: 'ms-client'
+    build: ./App.dockerfile
+    environment:
+      - MEDIASOUP_ANNOUNCED_IP=
+    networks:
+      mediasoup-network:
+        ipv4_address: 10.0.0.12
+    ports:
+      # Web application page (HTTPS).
+      - '3000-3003:3000-3003/tcp'
+
+  browser1:
+    image: 'selenium-browser:latest'
+    container_name: 'browser1'
+    hostname: 'browser1'
+    build: ./User.dockerfile
+    networks:
+      mediasoup-network:
+        ipv4_address: 10.0.0.13
+
+networks:
+  mediasoup-network:
+    external: true
