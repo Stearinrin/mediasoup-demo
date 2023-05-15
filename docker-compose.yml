@@ -24,7 +24,8 @@ services:
     image: 'mediasoup-demo-client:latest'
     container_name: 'ms-client'
     hostname: 'ms-client'
-    build: ./App.dockerfile
+    build:
+      dockerfile: ./App.dockerfile
     environment:
       - MEDIASOUP_ANNOUNCED_IP=
     networks:
@@ -38,7 +39,8 @@ services:
     image: 'selenium-browser:latest'
     container_name: 'browser1'
     hostname: 'browser1'
-    build: ./User.dockerfile
+    build:
+      dockerfile: ./User.dockerfile
     networks:
       mediasoup-network:
         ipv4_address: 10.0.0.13
