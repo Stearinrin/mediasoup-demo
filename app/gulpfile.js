@@ -55,7 +55,7 @@ const cssBase64 = require('gulp-css-base64');
 const nib = require('nib');
 const browserSync = require('browser-sync');
 
-const PKG = require('./package.json');
+const PKG = require('./package');
 const BANNER = fs.readFileSync('banner.txt').toString();
 const BANNER_OPTIONS =
 {
@@ -371,7 +371,7 @@ gulp.task('devel:vp9', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&consume=false',
+					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&enableWebcamLayers=true&webcamScalabilityMode=L3T3&consume=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -389,7 +389,7 @@ gulp.task('devel:vp9', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&produce=false',
+					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&enableWebcamLayers=true&webcamScalabilityMode=L3T3&produce=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -417,7 +417,7 @@ gulp.task('devel:h264', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&consume=false',
+					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&consume=false&enableWebcamLayers=true&numSimulcastStreams=3',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -435,7 +435,117 @@ gulp.task('devel:h264', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&produce=false',
+					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&produce=false&enableWebcamLayers=true&numSimulcastStreams=3',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		done();
+	}
+));
+
+gulp.task('devel:svctest', gulp.series(
+	'browser:base',
+	async (done) =>
+	{
+		const config = require('../server/config');
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('producer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:svctest&info=true&_throttleSecret=foo&forceVP9=true&enableWebcamLayers=true&webcamScalabilityMode=L3T3&consume=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('consumer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:svctest&info=true&_throttleSecret=foo&produce=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('consumer2').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:svctest&info=true&_throttleSecret=foo&produce=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		done();
+	}
+));
+
+gulp.task('devel:external', gulp.series(
+	'browser:base',
+	async (done) =>
+	{
+		const config = require('../server/config');
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('producer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel&info=true&_throttleSecret=foo&consume=false&forceVP9=true&enableWebcamLayers=true&webcamScalabilityMode=L3T3&externalVideo=true',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('consumer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel&info=true&_throttleSecret=foo&produce=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR

@@ -82,6 +82,7 @@ export default class PeerView extends React.Component
 			onChangeMaxSendingSpatialLayer,
 			onChangeVideoPreferredLayers,
 			onChangeVideoPriority,
+			onDownloadStats,
 			onRequestKeyFrame,
 			onStatsClick
 		} = this.props;
@@ -98,7 +99,7 @@ export default class PeerView extends React.Component
 
 		return (
 			<div data-component='PeerView'>
-				<div className='info'>
+				{/* <div className='info'>
 					<div className='icons'>
 						<div
 							className={classnames('icon', 'info', { on: showInfo })}
@@ -140,7 +141,7 @@ export default class PeerView extends React.Component
 									{'id: '}
 									<span
 										className='copiable'
-										data-tip='Copy video producer id to clipboard'
+										data-tip='Copy audio consumer id to clipboard'
 										onClick={() => clipboardCopy(`"${audioConsumerId}"`)}
 									>
 										{audioConsumerId}
@@ -176,7 +177,7 @@ export default class PeerView extends React.Component
 									{'id: '}
 									<span
 										className='copiable'
-										data-tip='Copy audio consumer id to clipboard'
+										data-tip='Copy video producer id to clipboard'
 										onClick={() => clipboardCopy(`"${videoProducerId}"`)}
 									>
 										{videoProducerId}
@@ -395,6 +396,38 @@ export default class PeerView extends React.Component
 								{this._printConsumerScore(videoConsumerId, videoScore)}
 							</If>
 						</If>
+
+						<If condition={audioProducerId || videoProducerId}>
+							<p>
+								<span
+									className='clickable'
+									onClick={(event) =>
+									{
+										event.stopPropagation();
+
+										onDownloadStats('producer');
+									}}
+								>
+									{'[ download producer stats ]'}
+								</span>
+							</p>
+						</If>
+
+						<If condition={audioConsumerId || videoConsumerId}>
+							<p>
+								<span
+									className='clickable'
+									onClick={(event) =>
+									{
+										event.stopPropagation();
+
+										onDownloadStats('consumer');
+									}}
+								>
+									{'[ download consumer stats ]'}
+								</span>
+							</p>
+						</If>
 					</div>
 
 					<div className={classnames('peer', { 'is-me': isMe })}>
@@ -432,7 +465,7 @@ export default class PeerView extends React.Component
 							</span>
 						</div>
 					</div>
-				</div>
+				</div> */}
 
 				<video
 					ref='videoElem'
@@ -452,7 +485,7 @@ export default class PeerView extends React.Component
 				<audio
 					ref='audioElem'
 					autoPlay
-					playsInline
+					// playsInline
 					muted={isMe || audioMuted}
 					controls={false}
 				/>
@@ -790,6 +823,7 @@ PeerView.propTypes =
 	onChangeMaxSendingSpatialLayer : PropTypes.func,
 	onChangeVideoPreferredLayers   : PropTypes.func,
 	onChangeVideoPriority          : PropTypes.func,
+	onDownloadStats                : PropTypes.func,
 	onRequestKeyFrame              : PropTypes.func,
 	onStatsClick                   : PropTypes.func.isRequired
 };

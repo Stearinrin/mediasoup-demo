@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.8.4",
+    "@reduxjs/toolkit": "^1.9.0",
     "bowser": "^2.11.0",
     "classnames": "^2.2.6",
     "clipboard-copy": "^3.1.0",
@@ -20,6 +21,7 @@
     "face-api.js": "^0.21.0",
     "hark": "^1.2.3",
     "js-cookie": "^2.2.1",
+    "js-file-download": "^0.4.12",
     "mediasoup-client": "github:versatica/mediasoup-client#v3",
     "pokemon": "^2.0.2",
     "prop-types": "^15.7.2",

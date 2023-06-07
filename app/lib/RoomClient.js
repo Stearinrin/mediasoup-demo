@@ -1,5 +1,6 @@
 import protooClient from 'protoo-client';
 import * as mediasoupClient from 'mediasoup-client';
+import fileDownload from 'js-file-download';
 import Logger from './Logger';
 import { getProtooUrl } from './urlFactory';
 import * as cookiesManager from './cookiesManager';
@@ -19,11 +20,44 @@ const PC_PROPRIETARY_CONSTRAINTS =
 	// optional : [ { googDscp: true } ]
 };
 
+// Used for simulcast webcam video.
+const WEBCAM_SIMULCAST_ENCODINGS =
+[
+	{ scaleResolutionDownBy: 4, maxBitrate: 500000, scalabilityMode: 'S1T2' },
+	{ scaleResolutionDownBy: 2, maxBitrate: 1000000, scalabilityMode: 'S1T2' },
+	{ scaleResolutionDownBy: 1, maxBitrate: 5000000, scalabilityMode: 'S1T2' }
+];
+
+// Used for VP9 webcam video.
+const WEBCAM_KSVC_ENCODINGS =
+[
+	{ scalabilityMode: 'S3T3_KEY' }
+];
+
+// Used for simulcast screen sharing.
+const SCREEN_SHARING_SIMULCAST_ENCODINGS =
+[
+	{ dtx: true, maxBitrate: 1500000 },
+	{ dtx: true, maxBitrate: 6000000 }
+];
+
+// Used for VP9 screen sharing.
+const SCREEN_SHARING_SVC_ENCODINGS =
+[
+	{ scalabilityMode: 'S3T3', dtx: true }
+];
+
 const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
+
+// const TOTAL_PRODUCERS = 1;
+
+const TOTAL_CONSUMERS = 2;
 
 const logger = new Logger('RoomClient');
 
 let store;
+
+let videoStream;
 
 export default class RoomClient
 {
@@ -109,6 +143,9 @@ export default class RoomClient
 		// Force VP9 codec for sending.
 		// @type {Boolean}
 		this._forceVP9 = Boolean(forceVP9);
+
+		// Recording.
+		// this._recording = Boolean(record);
 
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
@@ -225,6 +262,8 @@ export default class RoomClient
 		{
 			e2e.setCryptoKey('setCryptoKey', this._e2eKey, true);
 		}
+
+		this._totalStatsList = [];
 	}
 
 	close()
@@ -388,6 +427,14 @@ export default class RoomClient
 						// If audio-only mode is enabled, pause it.
 						if (consumer.kind === 'video' && store.getState().me.audioOnly)
 							this._pauseConsumer(consumer);
+
+						// Recording.
+						if (this._recording)
+						{
+							await this._startRecording();
+						}
+
+						// await this._triggerStatsSync(peerId);
 					}
 					catch (error)
 					{
@@ -595,7 +642,7 @@ export default class RoomClient
 			}
 		});
 
-		this._protoo.on('notification', (notification) =>
+		this._protoo.on('notification', async (notification) =>
 		{
 			logger.debug(
 				'proto "notification" event [method:%s, data:%o]',
@@ -625,6 +672,8 @@ export default class RoomClient
 						{
 							text : `${peer.displayName} has joined the room`
 						}));
+
+					await this._triggerStatsSync();
 
 					break;
 				}
@@ -985,7 +1034,7 @@ export default class RoomClient
 
 				logger.debug('enableWebcam() | calling getUserMedia()');
 
-				const stream = await navigator.mediaDevices.getUserMedia(
+				videoStream = await navigator.mediaDevices.getUserMedia(
 					{
 						video :
 						{
@@ -994,15 +1043,15 @@ export default class RoomClient
 						}
 					});
 
-				track = stream.getVideoTracks()[0];
+				track = videoStream.getVideoTracks()[0];
 			}
 			else
 			{
 				device = { label: 'external video' };
 
-				const stream = await this._getExternalVideoStream();
+				videoStream = await this._getExternalVideoStream();
 
-				track = stream.getVideoTracks()[0].clone();
+				track = videoStream.getVideoTracks()[0].clone();
 			}
 
 			let encodings;
@@ -1229,7 +1278,7 @@ export default class RoomClient
 
 			logger.debug('changeWebcam() | calling getUserMedia()');
 
-			const stream = await navigator.mediaDevices.getUserMedia(
+			videoStream = await navigator.mediaDevices.getUserMedia(
 				{
 					video :
 					{
@@ -1238,7 +1287,7 @@ export default class RoomClient
 					}
 				});
 
-			const track = stream.getVideoTracks()[0];
+			const track = videoStream.getVideoTracks()[0];
 
 			await this._webcamProducer.replaceTrack({ track });
 
@@ -1286,7 +1335,7 @@ export default class RoomClient
 
 			logger.debug('changeWebcamResolution() | calling getUserMedia()');
 
-			const stream = await navigator.mediaDevices.getUserMedia(
+			videoStream = await navigator.mediaDevices.getUserMedia(
 				{
 					video :
 					{
@@ -1295,7 +1344,7 @@ export default class RoomClient
 					}
 				});
 
-			const track = stream.getVideoTracks()[0];
+			const track = videoStream.getVideoTracks()[0];
 
 			await this._webcamProducer.replaceTrack({ track });
 
@@ -1752,6 +1801,31 @@ export default class RoomClient
 		}
 	}
 
+	async downloadStats(side)
+	{
+		logger.debug('downloadStats() [side:%s]', side);
+
+		try
+		{
+			const now = new Date();
+			const blob = new Blob([ JSON.stringify(this._totalStatsList, null, 2) ], { type: 'application/json' });
+			const isotime = now.toISOString().replace(/:/g, '-');
+			const filename = `webrtc_mediasoup_stats_${isotime}_${side}.json`;
+
+			fileDownload(blob, filename);
+		}
+		catch (error)
+		{
+			logger.error('downloadStats() | failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `Error downloading stats: ${error}`
+				}));
+		}
+	}
+
 	async requestConsumerKeyFrame(consumerId)
 	{
 		logger.debug('requestConsumerKeyFrame() [consumerId:%s]', consumerId);
@@ -2093,7 +2167,7 @@ export default class RoomClient
 
 	async getConsumerRemoteStats(consumerId)
 	{
-		logger.debug('getConsumerRemoteStats()');
+		logger.debug('getConsumerRemoteStats() | [consumerId:"%s"]', consumerId);
 
 		const consumer = this._consumers.get(consumerId);
 
@@ -2131,7 +2205,7 @@ export default class RoomClient
 
 	async getDataConsumerRemoteStats(dataConsumerId)
 	{
-		logger.debug('getDataConsumerRemoteStats()');
+		logger.debug('getDataConsumerRemoteStats() | [dataConsumerId:"%s"]', dataConsumerId);
 
 		const dataConsumer = this._dataConsumers.get(dataConsumerId);
 
@@ -2145,52 +2219,117 @@ export default class RoomClient
 	{
 		logger.debug('getSendTransportLocalStats()');
 
+		const _transport = this._sendTransport;
+
 		if (!this._sendTransport)
 			return;
 
-		return this._sendTransport.getStats();
+		const transport = _transport.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'outbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		return transport;
 	}
 
 	async getRecvTransportLocalStats()
 	{
 		logger.debug('getRecvTransportLocalStats()');
 
+		const _transport = this._recvTransport.getStats();
+
 		if (!this._recvTransport)
 			return;
 
-		return this._recvTransport.getStats();
+		const transport = _transport.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'inbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		return transport;
 	}
 
 	async getAudioLocalStats()
 	{
 		logger.debug('getAudioLocalStats()');
 
-		if (!this._micProducer)
+		const _producer = this._micProducer;
+
+		if (!_producer)
 			return;
 
-		return this._micProducer.getStats();
+		const producer = _producer.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'inbound-rtp' || report.type === 'outbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		return producer;
 	}
 
 	async getVideoLocalStats()
 	{
 		logger.debug('getVideoLocalStats()');
 
-		const producer = this._webcamProducer || this._shareProducer;
+		const _producer = this._webcamProducer || this._shareProducer;
 
-		if (!producer)
+		if (!_producer)
 			return;
 
-		return producer.getStats();
+		const producer = _producer.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'inbound-rtp' || report.type === 'outbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		return producer;
 	}
 
 	async getConsumerLocalStats(consumerId)
 	{
-		const consumer = this._consumers.get(consumerId);
+		logger.debug('getConsumerLocalStats() | [consumerId:"%s"]', consumerId);
 
-		if (!consumer)
+		const _consumer = this._consumers.get(consumerId);
+
+		if (!_consumer)
 			return;
 
-		return consumer.getStats();
+		const consumer = _consumer.getStats().then((stats) =>
+		{
+			const statsArray = Array.from(stats.values());
+			const reportsRtp = statsArray.filter((report) =>
+			{
+				return report.type === 'inbound-rtp' || report.type === 'outbound-rtp';
+			});
+
+			return reportsRtp;
+		});
+
+		logger.debug(consumer);
+
+		return consumer;
 	}
 
 	async applyNetworkThrottle({ uplink, downlink, rtt, secret, packetLoss })
@@ -2237,6 +2376,20 @@ export default class RoomClient
 						text : `Error resetting network throttle: ${error}`
 					}));
 			}
+		}
+	}
+
+	async pushTotalStats(stats)
+	{
+		logger.debug('pushTotalStats()');
+
+		try
+		{
+			this._totalStatsList.push(stats);
+		}
+		catch (error)
+		{
+			logger.error('pushTotalStats() | failed:%o', error);
 		}
 	}
 
@@ -2451,14 +2604,13 @@ export default class RoomClient
 					sctpCapabilities : this._useDataChannel && this._consume
 						? this._mediasoupDevice.sctpCapabilities
 						: undefined
-				});
+				}
+			);
 
-			store.dispatch(
-				stateActions.setRoomState('connected'));
+			store.dispatch(stateActions.setRoomState('connected'));
 
 			// Clean all the existing notifcations.
-			store.dispatch(
-				stateActions.removeAllNotifications());
+			store.dispatch(stateActions.removeAllNotifications());
 
 			store.dispatch(requestActions.notify(
 				{
@@ -2498,15 +2650,17 @@ export default class RoomClient
 						this.enableBotDataProducer();
 					}
 				});
-			}
 
-			// NOTE: For testing.
-			if (window.SHOW_INFO)
-			{
+				// NOTE: For testing.
+				// To wait until all consumers are joined is better (Consumers -> Producers).
 				const { me } = store.getState();
 
-				store.dispatch(
-					stateActions.setRoomStatsPeerId(me.id));
+				store.dispatch(stateActions.setRoomStatsPeerId(me.id));
+
+				// if (!window.SHOW_INFO)
+				// {
+				// 	store.dispatch(stateActions.setRoomStatsPeerId(null));
+				// }
 			}
 		}
 		catch (error)
@@ -2646,5 +2800,109 @@ export default class RoomClient
 			throw new Error('video.captureStream() not supported');
 
 		return this._externalVideoStream;
+	}
+
+	async _triggerStatsSync(peerId = null)
+	{
+		const currentTotalConsumers = this._consumers.size;
+
+		if (currentTotalConsumers >= TOTAL_CONSUMERS && this._consume)
+		{
+			try
+			{
+				logger.debug('_triggerStatsSync() [currentTotalConsumers:%d] [peerId:%s]',
+					currentTotalConsumers, peerId);
+
+				store.dispatch(stateActions.setRoomStatsPeerId(peerId));
+
+				// if (!window.SHOW_INFO)
+				// {
+				// 	store.dispatch(stateActions.setRoomStatsPeerId(null));
+				// }
+			}
+			catch (error)
+			{
+				logger.error('_triggerStatsSync() | failed:%o', error);
+			}
+		}
+		else
+		{
+			logger.debug('_triggerStatsSync() [currentTotalConsumers:%d]', currentTotalConsumers);
+		}
+	}
+
+	async _startRecording()
+	{
+		logger.debug('_startRecording()');
+		// let stream;
+		let chunks = [];
+		let recorder;
+		
+		// stream = await navigator.mediaDevices.getUserMedia({
+		// 	audio: true,
+		// 	video: true
+		// }).then((stream) => {
+		// 	return stream;
+		// }).catch((err) => {
+		// 	logger.error('_startRecording() | recording failed: %o', err);
+		// });
+
+		let videoTracks = [];
+		this._consumers.forEach((consumer) => {
+			logger.debug("consumer %o", consumer);
+			videoTracks.push(consumer.track);
+		});
+		// videoStream = this._consumers.getRtcPeerConnection();
+		videoStream = new MediaStream(videoTracks);
+
+		recorder = new MediaRecorder(videoStream);
+		// try {
+		// 	logger.debug("videoStream %o", videoStream);
+		// 	if (typeof videoStream === 'MediaStreamTrack') {
+		// 		recorder = new MediaRecorder(videoStream);
+		// 	}
+		// 	else {
+		// 		logger.warn('_startRecording() | recording failed: %o', 'videoStream is not a MediaStream');
+		// 		return;
+		// 	}
+		// } catch (e) {
+		// 	logger.error('_startRecording() | recording failed: %o', e);
+		// 	return;
+		// }
+
+		if (recorder !== undefined) 
+		{
+			logger.debug("typeof recorder is " + typeof recorder);
+			
+			recorder.ondataavailable = (e) => {
+				logger.debug('_startRecording() | recording data %o', e.data);
+				if (e.data.size == 0) {
+					logger.debug('_startRecording() | recording empty data');
+				}
+				else {
+					let videoBlob = videoStream;
+					chunks.push(videoBlob);
+				}
+			}
+
+			recorder.onstop = (e) => {
+				let completeBlob = new Blob(chunks, {
+					type: chunks[0].type
+				});
+				let blobUrl = URL.createObjectURL(completeBlob);
+				let a = document.createElement('a');
+				
+				a.href = blobUrl;
+				a.download = 'video.webm';
+				a.click();
+				
+				logger.debug('_startRecording() | recording stopped');
+			}
+
+			recorder.start();
+			logger.debug('_startRecording() | recording started');
+
+			setTimeout(() => recorder.stop(), 10000);
+		}
 	}
 }

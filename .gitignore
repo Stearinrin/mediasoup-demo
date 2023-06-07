@@ -1,4 +1,9 @@
 node_modules/
+scripts/
+statistics/
+output/
+videos/
+!videos/video-audio-stereo.mp4
 
 /server/config.*
 !/server/config.example.js
@@ -7,10 +12,12 @@ node_modules/
 /server/mediasoup_valgrind_*
 
 /.vscode/
+*.code-workspace
 
 .node-version
 .tool-versions
 yarn.lock
+package-lock.json
 
 /scripts/*
 !/scripts/producer.py

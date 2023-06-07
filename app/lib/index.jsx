@@ -3,10 +3,7 @@ import UrlParse from 'url-parse';
 import React from 'react';
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
-import {
-	applyMiddleware as applyReduxMiddleware,
-	createStore as createReduxStore
-} from 'redux';
+import { configureStore as createReduxStore } from '@reduxjs/toolkit';
 import thunk from 'redux-thunk';
 // import { createLogger as createReduxLogger } from 'redux-logger';
 import randomString from 'random-string';
@@ -39,11 +36,11 @@ const reduxMiddlewares = [ thunk ];
 // }
 
 let roomClient;
-const store = createReduxStore(
-	reducers,
-	undefined,
-	applyReduxMiddleware(...reduxMiddlewares)
-);
+const store = createReduxStore({
+	reducer        : reducers,
+	preloadedState : undefined,
+	middleware     : reduxMiddlewares
+});
 
 window.STORE = store;
 
@@ -82,6 +79,7 @@ async function run()
 	const numSimulcastStreams = urlParser.query.numSimulcastStreams ?
 		Number(urlParser.query.numSimulcastStreams) : 3;
 	const info = urlParser.query.info === 'true';
+	// const record = urlParser.query.record === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
 	const throttleSecret = urlParser.query.throttleSecret;
@@ -136,6 +134,7 @@ async function run()
 			case 'sharingScalabilityMode':
 			case 'numSimulcastStreams':
 			case 'info':
+			// case 'record':
 			case 'faceDetection':
 			case 'externalVideo':
 			case 'throttleSecret':
@@ -183,19 +182,19 @@ async function run()
 			peerId,
 			displayName,
 			device,
-			handlerName : handlerName,
+			handlerName,
 			forceTcp,
 			produce,
 			consume,
 			datachannel,
-			forceVP8,
-			forceH264,
-			forceVP9,
 			enableWebcamLayers,
 			enableSharingLayers,
 			webcamScalabilityMode,
 			sharingScalabilityMode,
 			numSimulcastStreams,
+			forceVP8,
+			forceH264,
+			forceVP9,
 			externalVideo,
 			e2eKey,
 			consumerReplicas
