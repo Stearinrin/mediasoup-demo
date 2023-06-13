@@ -7,6 +7,7 @@ node_modules/
 /server/mediasoup_valgrind_*
 
 /.vscode/
+*.code-workspace
 
 .node-version
 .tool-versions
