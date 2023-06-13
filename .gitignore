@@ -13,4 +13,11 @@ videos/
 
 /.vscode/
 *.code-workspace
+
+.node-version
+.tool-versions
 package-lock.json
+yarn.lock
+
+/scripts/*
+!/scripts/producer.py
