@@ -7,7 +7,7 @@ services:
     hostname: 'ms-server'
     build: ./server/
     environment:
-      - MEDIASOUP_ANNOUNCED_IP=
+      - MEDIASOUP_ANNOUNCED_IP
     networks:
       mediasoup-network:
         ipv4_address: 10.0.0.11
@@ -26,7 +26,7 @@ services:
     hostname: 'ms-client'
     build: ./App.dockerfile
     environment:
-      - MEDIASOUP_ANNOUNCED_IP=
+      - MEDIASOUP_ANNOUNCED_IP
     networks:
       mediasoup-network:
         ipv4_address: 10.0.0.12
@@ -34,14 +34,14 @@ services:
       # Web application page (HTTPS).
       - '3000-3003:3000-3003/tcp'
 
-  browser1:
-    image: 'selenium-browser:latest'
-    container_name: 'browser1'
-    hostname: 'browser1'
-    build: ./User.dockerfile
-    networks:
-      mediasoup-network:
-        ipv4_address: 10.0.0.13
+  # browser1:
+  #   image: 'selenium-browser:latest'
+  #   container_name: 'browser1'
+  #   hostname: 'browser1'
+  #   build: ./User.dockerfile
+  #   networks:
+  #     mediasoup-network:
+  #       ipv4_address: 10.0.0.13
 
 networks:
   mediasoup-network:
