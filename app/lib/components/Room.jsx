@@ -28,11 +28,11 @@ class Room extends React.Component
 		}	= this.props;
 
 		return (
-			<Appear duration={300}>
+			// <Appear duration={300}>
 				<div data-component='Room'>
-					<Notifications />
+					{/* <Notifications /> */}
 
-					<div className='state'>
+					{/* <div className='state'>
 						<div className={classnames('icon', room.state)} />
 						<p className={classnames('text', room.state)}>{room.state}</p>
 					</div>
@@ -70,19 +70,26 @@ class Room extends React.Component
 								invitation link
 							</a>
 						</div>
-					</div>
+					</div> */}
 
-					<Peers />
+					<If condition={roomClient._consume}>
+						<Peers />
+					</If>
 
-					<div
-						className={classnames('me-container', {
-							'active-speaker' : amActiveSpeaker
-						})}
-					>
-						<Me />
-					</div>
+					<If condition={roomClient._produce}>
+						<div
+							className={classnames('me-container', {
+								'active-speaker' : amActiveSpeaker
+							})}
+						>
+							<Me />
+						</div>
+					</If>
 
-					<div className='chat-input-container'>
+					{/* <div className='chat-input-container'>
+						<ChatInput />
+
+					{/* <div className='chat-input-container'>
 						<ChatInput />
 					</div>
 
@@ -138,8 +145,9 @@ class Room extends React.Component
 						delayHide={100}
 						delayUpdate={50}
 					/>
+					*/}
 				</div>
-			</Appear>
+			// </Appear>
 		);
 	}
 

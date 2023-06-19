@@ -14,7 +14,7 @@ const Peers = ({ peers, activeSpeakerId }) =>
 				peers.map((peer) =>
 				{
 					return (
-						<Appear key={peer.id} duration={1000}>
+						// <Appear key={peer.id} duration={1000}>
 							<div
 								className={classnames('peer-container', {
 									'active-speaker' : peer.id === activeSpeakerId
@@ -22,7 +22,7 @@ const Peers = ({ peers, activeSpeakerId }) =>
 							>
 								<Peer id={peer.id} />
 							</div>
-						</Appear>
+						// </Appear>
 					);
 				})
 			}
