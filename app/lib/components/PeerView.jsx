@@ -479,7 +479,7 @@ export default class PeerView extends React.Component
 					autoPlay
 					playsInline
 					muted
-					controls={false}
+					controls={true}
 				/>
 
 				<audio
@@ -517,6 +517,19 @@ export default class PeerView extends React.Component
 		const { audioTrack, videoTrack } = this.props;
 
 		this._setTracks(audioTrack, videoTrack);
+
+		// fullscreenchange event listen
+		document.addEventListener('webkitfullscreenchange', () => {
+			let fullscreenElement = document.webkitFullscreenElement;
+
+			// check video element is fullscreen
+			if (fullscreenElement?.tagName === 'VIDEO') {
+				console.log("a");
+				fullscreenElement.classList.add('::-webkit-media-controls');
+			} else {
+				console.log("b");
+			}	
+		});
 	}
 
 	componentWillUnmount()
