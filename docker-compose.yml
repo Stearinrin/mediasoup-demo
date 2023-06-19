@@ -13,7 +13,7 @@ services:
         ipv4_address: 10.0.0.11
     ports:
       # Media streaming port (UDP).
-      - '44444-44449:44444-44449/udp'
+      - '44444-44461:44444-44461/udp'
       # WebSocket API and signaling (HTTPS).
       - '4443:4443/tcp'
       # iperf3 (testing only).
@@ -26,6 +26,8 @@ services:
     hostname: 'ms-client'
     build:
       dockerfile: ./App.dockerfile
+    depends_on:
+      - mediaserver
     environment:
       - MEDIASOUP_ANNOUNCED_IP
     networks:

@@ -81,14 +81,14 @@ export default class RoomClient
 			produce,
 			consume,
 			datachannel,
+			forceVP8,
+			forceH264,
+			forceVP9,
 			enableWebcamLayers,
 			enableSharingLayers,
 			webcamScalabilityMode,
 			sharingScalabilityMode,
 			numSimulcastStreams,
-			forceVP8,
-			forceH264,
-			forceVP9,
 			externalVideo,
 			e2eKey,
 			consumerReplicas
@@ -429,10 +429,10 @@ export default class RoomClient
 							this._pauseConsumer(consumer);
 
 						// Recording.
-						if (this._recording)
-						{
-							await this._startRecording();
-						}
+						// if (this._recording)
+						// {
+						// 	await this._startRecording();
+						// }
 
 						// await this._triggerStatsSync(peerId);
 					}

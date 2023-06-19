@@ -8,7 +8,9 @@ services:
     build:
       dockerfile: ./Dockerfile.all
     environment:
-      - MEDIASOUP_ANNOUNCED_IP=
+      # - MEDIASOUP_MIN_PORT=40000
+      # - MEDIASOUP_MAX_PORT=40010
+      - MEDIASOUP_ANNOUNCED_IP
     networks:
       mediasoup-network:
         ipv4_address: 10.0.0.11
@@ -23,17 +25,17 @@ services:
       # Web application page (HTTPS).
       - '3000-3003:3000-3003/tcp'
 
-  browser1:
-    image: 'selenium-browser:latest'
-    container_name: 'browser1'
-    hostname: 'browser1'
-    build:
-      dockerfile: ./User.dockerfile
-    depends_on:
-      - mediasoup-server
-    networks:
-      mediasoup-network:
-        ipv4_address: 10.0.0.12
+  # browser1:
+  #   image: 'selenium-browser:latest'
+  #   container_name: 'browser1'
+  #   hostname: 'browser1'
+  #   build:
+  #     dockerfile: ./User.dockerfile
+  #   depends_on:
+  #     - mediasoup-server
+  #   networks:
+  #     mediasoup-network:
+  #       ipv4_address: 10.0.0.12
 
 networks:
   mediasoup-network:

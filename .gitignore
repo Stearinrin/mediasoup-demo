@@ -16,7 +16,7 @@ videos/
 
 .node-version
 .tool-versions
-package-lock.json
+
 yarn.lock
 package-lock.json
 
