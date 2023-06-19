@@ -80,7 +80,6 @@ export default class RoomClient
 			forceTcp,
 			produce,
 			consume,
-			datachannel,
 			forceVP8,
 			forceH264,
 			forceVP9,
@@ -89,6 +88,8 @@ export default class RoomClient
 			webcamScalabilityMode,
 			sharingScalabilityMode,
 			numSimulcastStreams,
+			record,
+			stat,
 			externalVideo,
 			e2eKey,
 			consumerReplicas
@@ -130,7 +131,7 @@ export default class RoomClient
 
 		// Whether we want DataChannels.
 		// @type {Boolean}
-		this._useDataChannel = Boolean(datachannel);
+		// this._useDataChannel = Boolean(datachannel);
 
 		// Force VP8 codec for sending.
 		// @type {Boolean}
@@ -146,6 +147,9 @@ export default class RoomClient
 
 		// Recording.
 		// this._recording = Boolean(record);
+
+		// Stat.
+		this._stat = Boolean(stat);
 
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
@@ -429,12 +433,15 @@ export default class RoomClient
 							this._pauseConsumer(consumer);
 
 						// Recording.
-						// if (this._recording)
-						// {
-						// 	await this._startRecording();
-						// }
-
-						// await this._triggerStatsSync(peerId);
+						if (this._recording)
+						{
+							await this._startRecording();
+						}
+						
+						if (this._stat)
+						{
+							await this._triggerStatsSync(peerId);
+						}
 					}
 					catch (error)
 					{
@@ -673,7 +680,10 @@ export default class RoomClient
 							text : `${peer.displayName} has joined the room`
 						}));
 
-					await this._triggerStatsSync();
+					// if (this._stat)
+					// {
+					// 	await this._triggerStatsSync();
+					// }
 
 					break;
 				}
@@ -1803,8 +1813,16 @@ export default class RoomClient
 
 	async downloadStats(side)
 	{
+		if (!side)
+		{
+			if (this._consume === false && this._produce === false) side = 'none';
+			else if (this._produce === false) side = 'consumer';
+			else if (this._consume === false) side = 'producer';
+			else side = 'both';
+		}
+		
 		logger.debug('downloadStats() [side:%s]', side);
-
+		
 		try
 		{
 			const now = new Date();
@@ -2381,11 +2399,20 @@ export default class RoomClient
 
 	async pushTotalStats(stats)
 	{
-		logger.debug('pushTotalStats()');
-
-		try
+				try
 		{
-			this._totalStatsList.push(stats);
+			// Avoid memory leaks by fooling.
+			if (this._totalStatsList.length < 100)
+			{
+				logger.debug('pushTotalStats()');
+
+				this._totalStatsList.push(stats);
+			}
+			
+			if (this._totalStatsList.length == 30)
+			{
+				this.downloadStats();
+			}
 		}
 		catch (error)
 		{
@@ -2403,6 +2430,10 @@ export default class RoomClient
 				{
 					handlerName : this._handlerName
 				});
+
+			store.dispatch(stateActions.setRoomMediasoupClientHandler(
+				this._mediasoupDevice.handlerName
+			));
 
 			const routerRtpCapabilities =
 				await this._protoo.request('getRouterRtpCapabilities');
@@ -2655,7 +2686,10 @@ export default class RoomClient
 				// To wait until all consumers are joined is better (Consumers -> Producers).
 				const { me } = store.getState();
 
-				store.dispatch(stateActions.setRoomStatsPeerId(me.id));
+				if (this._stat)
+				{
+					store.dispatch(stateActions.setRoomStatsPeerId(me.id));
+				}
 
 				// if (!window.SHOW_INFO)
 				// {

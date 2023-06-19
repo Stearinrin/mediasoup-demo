@@ -79,7 +79,8 @@ async function run()
 	const numSimulcastStreams = urlParser.query.numSimulcastStreams ?
 		Number(urlParser.query.numSimulcastStreams) : 3;
 	const info = urlParser.query.info === 'true';
-	// const record = urlParser.query.record === 'true';
+	const record = urlParser.query.record === 'true';
+	const stat = urlParser.query.stat === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
 	const throttleSecret = urlParser.query.throttleSecret;
@@ -116,35 +117,32 @@ async function run()
 	for (const key of Object.keys(roomUrlParser.query))
 	{
 		// Don't keep some custom params.
-		switch (key)
-		{
-			case 'roomId':
-			case 'handlerName':
-			case 'handler':
-			case 'forceTcp':
-			case 'produce':
-			case 'consume':
-			case 'datachannel':
-			case 'forceVP8':
-			case 'forceH264':
-			case 'forceVP9':
-			case 'enableWebcamLayers':
-			case 'enableSharingLayers':
-			case 'webcamScalabilityMode':
-			case 'sharingScalabilityMode':
-			case 'numSimulcastStreams':
-			case 'info':
-			// case 'record':
-			case 'faceDetection':
-			case 'externalVideo':
-			case 'throttleSecret':
-			case 'e2eKey':
-			case 'consumerReplicas':
-				break;
+		// switch (key)
+		// {
+		// 	case 'roomId':
+		// 	case 'handlerName':
+		// 	case 'handler':
+		// 	case 'simulcast':
+		// 	case 'sharingSimulcast':
+		// 	case 'produce':
+		// 	case 'consume':
+		// 	case 'forceH264':
+		// 	case 'forceVP9':
+		// 	case 'forceTcp':
+		// 	case 'svc':
+		// 	case 'datachannel':
+		// 	case 'info':
+		// 	case 'record':
+		// 	case 'faceDetection':
+		// 	case 'externalVideo':
+		// 	case 'throttleSecret':
+		// 	case 'e2eKey':
+		// 	case 'consumerReplicas':
+		// 		break;
 
-			default:
-				delete roomUrlParser.query[key];
-		}
+		// 	default:
+		// 		delete roomUrlParser.query[key];
+		// }
 	}
 	delete roomUrlParser.hash;
 
@@ -186,15 +184,17 @@ async function run()
 			forceTcp,
 			produce,
 			consume,
+			forceVP8,
+			forceH264,
+			forceVP9,
 			datachannel,
 			enableWebcamLayers,
 			enableSharingLayers,
 			webcamScalabilityMode,
 			sharingScalabilityMode,
 			numSimulcastStreams,
-			forceVP8,
-			forceH264,
-			forceVP9,
+			record,
+			stat,
 			externalVideo,
 			e2eKey,
 			consumerReplicas
