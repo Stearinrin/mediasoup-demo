@@ -64,6 +64,7 @@ export default class RoomClient
 			record,
 			stat,
 			externalVideo,
+			// externalVideoSource,
 			e2eKey,
 			consumerReplicas
 		}
@@ -167,6 +168,16 @@ export default class RoomClient
 			this._externalVideo.muted = true;
 			this._externalVideo.loop = true;
 			this._externalVideo.setAttribute('playsinline', '');
+
+			// if (externalVideoSource)
+			// {
+			// 	// Local File Inclusion (LFI) valunerability!
+			// 	this._externalVideo.src = externalVideoSource;
+			// }
+			// else
+			// {
+			// 	this._externalVideo.src = EXTERNAL_VIDEO_SRC;
+			// }
 			this._externalVideo.src = EXTERNAL_VIDEO_SRC;
 
 			this._externalVideo.play()
@@ -2372,7 +2383,7 @@ export default class RoomClient
 
 	async pushTotalStats(stats)
 	{
-				try
+		try
 		{
 			// Avoid memory leaks by fooling.
 			if (this._totalStatsList.length < 100)

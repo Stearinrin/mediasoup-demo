@@ -83,6 +83,7 @@ async function run()
 	const stat = urlParser.query.stat === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
+	const externalVideoSource = urlParser.query.externalVideoSource;
 	const throttleSecret = urlParser.query.throttleSecret;
 	const e2eKey = urlParser.query.e2eKey;
 	const consumerReplicas = urlParser.query.consumerReplicas;
@@ -196,6 +197,7 @@ async function run()
 			record,
 			stat,
 			externalVideo,
+			externalVideoSource,
 			e2eKey,
 			consumerReplicas
 		});

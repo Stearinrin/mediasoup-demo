@@ -86,10 +86,11 @@ class Room extends React.Component
 						</div>
 					</If>
 
-					{/* <div className='chat-input-container'>
+					{/*
+					<div className='chat-input-container'>
 						<ChatInput />
 
-					{/* <div className='chat-input-container'>
+					<div className='chat-input-container'>
 						<ChatInput />
 					</div>
 
@@ -129,9 +130,11 @@ class Room extends React.Component
 							onClick={() => roomClient.restartIce()}
 						/>
 					</div>
+					*/}
 
 					<Stats />
 
+					{/*
 					<If condition={window.NETWORK_THROTTLE_SECRET}>
 						<NetworkThrottle
 							secret={window.NETWORK_THROTTLE_SECRET}

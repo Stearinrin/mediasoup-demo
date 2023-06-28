@@ -65,7 +65,7 @@ class Stats extends React.Component
 
 		return (
 			<div data-component='Stats'>
-				<div className={classnames('content', { visible: peerId })}>
+				{/* <div className={classnames('content', { visible: peerId })}>
 					<div className='header'>
 						<div className='info'>
 							<div
@@ -242,7 +242,7 @@ class Stats extends React.Component
 							{this._printStats('bot dataconsumer remote stats', botDataConsumerRemoteStats)}
 						</If>
 					</div>
-				</div>
+				</div> */}
 			</div>
 		);
 	}
