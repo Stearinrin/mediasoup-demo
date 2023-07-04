@@ -315,12 +315,6 @@ class Stats extends React.Component
 			sendTransportLocalStats = await roomClient.getSendTransportLocalStats()
 				.catch(() => {});
 
-			recvTransportRemoteStats = await roomClient.getRecvTransportRemoteStats()
-				.catch(() => {});
-
-			recvTransportLocalStats = await roomClient.getRecvTransportLocalStats()
-				.catch(() => {});
-
 			audioProducerRemoteStats = await roomClient.getAudioRemoteStats()
 				.catch(() => {});
 
@@ -342,8 +336,6 @@ class Stats extends React.Component
 			totalStats = {
 				sendTransportRemoteStats,
 				sendTransportLocalStats,
-				recvTransportRemoteStats,
-				recvTransportLocalStats,
 				audioProducerRemoteStats,
 				audioProducerLocalStats,
 				videoProducerRemoteStats,
@@ -354,6 +346,12 @@ class Stats extends React.Component
 		}
 		else
 		{
+			recvTransportRemoteStats = await roomClient.getRecvTransportRemoteStats()
+				.catch(() => {});
+
+			recvTransportLocalStats = await roomClient.getRecvTransportLocalStats()
+				.catch(() => {});
+
 			audioConsumerRemoteStats = await roomClient.getConsumerRemoteStats(audioConsumerId)
 				.catch(() => {});
 
@@ -375,6 +373,8 @@ class Stats extends React.Component
 					.catch(() => {});
 
 			totalStats = {
+				recvTransportRemoteStats,
+				recvTransportLocalStats,
 				audioConsumerRemoteStats,
 				audioConsumerLocalStats,
 				videoConsumerRemoteStats,

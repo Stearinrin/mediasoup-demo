@@ -11,9 +11,6 @@ services:
       # - MEDIASOUP_MIN_PORT=40000
       # - MEDIASOUP_MAX_PORT=40010
       - MEDIASOUP_ANNOUNCED_IP
-    networks:
-      mediasoup-network:
-        ipv4_address: 10.0.0.11
     ports:
       # Media streaming port (UDP).
       - '44444-44449:44444-44449/udp'
@@ -37,6 +34,3 @@ services:
   #     mediasoup-network:
   #       ipv4_address: 10.0.0.12
 
-networks:
-  mediasoup-network:
-    external: true

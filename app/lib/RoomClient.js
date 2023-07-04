@@ -1052,7 +1052,7 @@ export default class RoomClient
 			let codec;
 			const codecOptions =
 			{
-				videoGoogleStartBitrate : 1000
+				videoGoogleStartBitrate : 150000
 			};
 
 			if (this._forceVP8)
@@ -1103,7 +1103,7 @@ export default class RoomClient
 					encodings =
 					[
 						{
-							maxBitrate      : 5000000,
+							maxBitrate      : 50000000,
 							scalabilityMode : this._webcamScalabilityMode || 'L3T3_KEY'
 						}
 					];
@@ -1115,7 +1115,7 @@ export default class RoomClient
 					[
 						{
 							scaleResolutionDownBy : 1,
-							maxBitrate            : 5000000,
+							maxBitrate            : 50000000,
 							scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
 						}
 					];
@@ -1125,7 +1125,7 @@ export default class RoomClient
 						encodings.unshift(
 							{
 								scaleResolutionDownBy : 2,
-								maxBitrate            : 1000000,
+								maxBitrate            : 10000000,
 								scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
 							}
 						);
@@ -1136,7 +1136,7 @@ export default class RoomClient
 						encodings.unshift(
 							{
 								scaleResolutionDownBy : 4,
-								maxBitrate            : 500000,
+								maxBitrate            : 5000000,
 								scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
 							}
 						);
