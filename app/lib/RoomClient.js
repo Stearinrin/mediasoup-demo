@@ -12,7 +12,8 @@ const VIDEO_CONSTRAINS =
 {
 	qvga : { width: { ideal: 320 }, height: { ideal: 240 } },
 	vga  : { width: { ideal: 640 }, height: { ideal: 480 } },
-	hd   : { width: { ideal: 1280 }, height: { ideal: 720 } }
+	hd   : { width: { ideal: 1280 }, height: { ideal: 720 } },
+	fhd  : { width: { ideal: 1920 }, height: { ideal: 1080 } }
 };
 
 const PC_PROPRIETARY_CONSTRAINTS =
@@ -20,7 +21,7 @@ const PC_PROPRIETARY_CONSTRAINTS =
 	// optional : [ { googDscp: true } ]
 };
 
-const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
+const EXTERNAL_VIDEO_SRC = '/resources/videos/big_buck_bunny_1080p_30s.mp4';
 
 // const TOTAL_PRODUCERS = 1;
 
@@ -243,7 +244,7 @@ export default class RoomClient
 		this._webcam =
 		{
 			device     : null,
-			resolution : 'hd'
+			resolution : 'fhd'
 		};
 
 		if (this._e2eKey && e2e.isSupported())
@@ -1321,10 +1322,13 @@ export default class RoomClient
 					this._webcam.resolution = 'hd';
 					break;
 				case 'hd':
+					this._webcam.resolution = 'fhd';
+					break;
+				case 'fhd':
 					this._webcam.resolution = 'qvga';
 					break;
 				default:
-					this._webcam.resolution = 'hd';
+					this._webcam.resolution = 'fhd';
 			}
 
 			logger.debug('changeWebcamResolution() | calling getUserMedia()');
