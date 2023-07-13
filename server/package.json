@@ -19,7 +19,7 @@
     "debug": "^4.3.1",
     "express": "^4.17.1",
     "heapdump": "^0.3.15",
-    "mediasoup": "../mediasoup",
+    "mediasoup": "github:Stearinrin/mediasoup#dev",
     "pidusage": "^2.0.21",
     "protoo-server": "^4.0.5"
   },

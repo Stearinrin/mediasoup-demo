@@ -27,6 +27,10 @@ const EXTERNAL_VIDEO_SRC = '/resources/videos/big_buck_bunny_1080p_30s.mp4';
 
 const TOTAL_CONSUMERS = 2;
 
+const MAX_STATS_LENGTH = 200;
+
+const STATS_LENGTH = 60;
+
 const logger = new Logger('RoomClient');
 
 let store;
@@ -2390,14 +2394,14 @@ export default class RoomClient
 		try
 		{
 			// Avoid memory leaks by fooling.
-			if (this._totalStatsList.length < 100)
+			if (this._totalStatsList.length < MAX_STATS_LENGTH)
 			{
 				logger.debug('pushTotalStats()');
 
 				this._totalStatsList.push(stats);
 			}
 			
-			if (this._totalStatsList.length == 30)
+			if (this._totalStatsList.length == STATS_LENGTH)
 			{
 				this.downloadStats();
 			}
