@@ -8,12 +8,11 @@ services:
     build:
       dockerfile: ./Dockerfile.all
     environment:
-      # - MEDIASOUP_MIN_PORT=40000
-      # - MEDIASOUP_MAX_PORT=40010
       - MEDIASOUP_ANNOUNCED_IP
     ports:
       # Media streaming port (UDP).
-      - '44444-44449:44444-44449/udp'
+      - '44444-44999:44444-44999/udp'
+      # - '40000-49999:40000-49999/udp'
       # WebSocket API and signaling (HTTPS).
       - '4443:4443/tcp'
       # iperf3 (testing only).
