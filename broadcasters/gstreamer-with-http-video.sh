@@ -83,7 +83,7 @@ VIDEO_PT=101
 echo ">>> verifying that room '${ROOM_ID}' exists..."
 
 ${HTTPIE_COMMAND} \
-	GET ${SERVER_URL}/rooms/${ROOM_ID} > /dev/null
+	GET ${SERVER_URL}/rooms/${ROOM_ID} --verify=no > /dev/null
 
 #
 # Create a Broadcaster entity in the server by sending a POST with our metadata.
@@ -98,13 +98,14 @@ ${HTTPIE_COMMAND} \
 	id="${BROADCASTER_ID}" \
 	displayName="Broadcaster" \
 	device:='{"name": "GStreamer"}' \
+    --verify=no \
 	> /dev/null
 
 #
 # Upon script termination delete the Broadcaster in the server by sending a
 # HTTP DELETE.
 #
-trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID} > /dev/null' EXIT
+trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID} --verify=no > /dev/null' EXIT
 
 #
 # Create a PlainTransport in the mediasoup to send our audio using plain RTP
@@ -118,6 +119,7 @@ res=$(${HTTPIE_COMMAND} \
 	type="plain" \
 	comedia:=true \
 	rtcpMux:=false \
+    --verify=no \
 	2> /dev/null)
 
 #
@@ -138,6 +140,7 @@ res=$(${HTTPIE_COMMAND} \
 	type="plain" \
 	comedia:=true \
 	rtcpMux:=false \
+    --verify=no \
 	2> /dev/null)
 
 #
@@ -156,6 +159,7 @@ ${HTTPIE_COMMAND} -v \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${audioTransportId}/producers \
 	kind="audio" \
 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"audio/opus\", \"payloadType\":${AUDIO_PT}, \"clockRate\":48000, \"channels\":2, \"parameters\":{ \"sprop-stereo\":1 } }], \"encodings\": [{ \"ssrc\":${AUDIO_SSRC} }] }" \
+    --verify=no \
 	> /dev/null
 
 #
@@ -168,6 +172,7 @@ ${HTTPIE_COMMAND} -v \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${videoTransportId}/producers \
 	kind="video" \
 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/h264\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000, \"parameters\":{ \"packetization-mode\":1, \"profile-level-id\":\"42e032\", \"level-asymmetry-allowed\":1 } }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
+    --verify=no \
 	> /dev/null
 
 #
