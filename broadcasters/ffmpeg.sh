@@ -77,7 +77,7 @@ VIDEO_CODEC="libvpx-vp9"
 echo ">>> verifying that room '${ROOM_ID}' exists..."
 
 ${HTTPIE_COMMAND} \
-    GET ${SERVER_URL}/rooms/${ROOM_ID} --verify=no > /dev/null
+    GET ${SERVER_URL}/rooms/${ROOM_ID} --ignore-stdin --verify=no > /dev/null
 
 #
 # Create a Broadcaster entity in the server by sending a POST with our metadata.
@@ -93,13 +93,14 @@ ${HTTPIE_COMMAND} \
     displayName="Broadcaster" \
     device:='{"name": "FFmpeg"}' \
     --verify=no \
+	--ignore-stdin \
     > /dev/null
 
 #
 # Upon script termination delete the Broadcaster in the server by sending a
 # HTTP DELETE.
 #
-trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID} --verify=no > /dev/null' EXIT
+trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID} --ignore-stdin --verify=no > /dev/null' EXIT
 
 #
 # Create a PlainTransport in the mediasoup to send our audio using plain RTP
@@ -114,8 +115,8 @@ res=$(${HTTPIE_COMMAND} \
     comedia:=true \
     rtcpMux:=false \
     --verify=no \
-    # 2> /dev/null)
-    )
+	--ignore-stdin \
+    2> /dev/null)
 
 #
 # Parse JSON response into Shell variables and extract the PlainTransport id,
@@ -136,6 +137,7 @@ res=$(${HTTPIE_COMMAND} \
     comedia:=true \
     rtcpMux:=false \
     --verify=no \
+	--ignore-stdin \
     2> /dev/null)
 
 #
@@ -168,6 +170,7 @@ ${HTTPIE_COMMAND} -v \
         }] \
     }" \
     --verify=no \
+	--ignore-stdin \
     > /dev/null
 
 #
@@ -196,6 +199,7 @@ ${HTTPIE_COMMAND} -v \
         }] \
     }" \
     --verify=no \
+	--ignore-stdin \
     > /dev/stdout
 
 # H.265 (not working yet)
