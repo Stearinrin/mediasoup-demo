@@ -8,6 +8,9 @@ import * as requestActions from './redux/requestActions';
 import * as stateActions from './redux/stateActions';
 import * as e2e from './e2e';
 
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, downloadWithProgress, toBlobURL } from '@ffmpeg/util';
+
 const VIDEO_CONSTRAINS =
 {
 	qvga : { width: { ideal: 320 }, height: { ideal: 240 } },
@@ -29,7 +32,7 @@ const TOTAL_CONSUMERS = 2;
 
 const MAX_STATS_LENGTH = 200;
 
-const STATS_LENGTH = 60;
+const STATS_LENGTH = 120;
 
 const logger = new Logger('RoomClient');
 
@@ -1820,7 +1823,8 @@ export default class RoomClient
 			const now = new Date();
 			const blob = new Blob([ JSON.stringify(this._totalStatsList, null, 2) ], { type: 'application/json' });
 			const isotime = now.toISOString().replace(/:/g, '-');
-			const filename = `webrtc_mediasoup_stats_${isotime}_${side}.json`;
+			const unique_id = Math.random().toString(36).slice(-6);
+			const filename = `webrtc_mediasoup_stats_${isotime}_${side}_${unique_id}.json`;
 
 			fileDownload(blob, filename);
 		}
@@ -2412,6 +2416,38 @@ export default class RoomClient
 		}
 	}
 
+	async ffmpeg_test()
+	{
+		logger.debug('ffmpeg_test()');
+
+		// const FFmpegWasm = require('@ffmpeg/ffmpeg');
+		// const FFmpegUtil = require('@ffmpeg/util');
+
+		// const ffmpeg = new FFmpegWasm.FFmpeg();
+		const ffmpeg = new FFmpeg();
+
+		console.log('ffmpeg: %o', ffmpeg);
+
+		ffmpeg.on("log", ({ message }) => console.log(message));
+		ffmpeg.on("error", (e) => console.log(e));
+		ffmpeg.on("progress", ({ progress, time }) => {
+			console.log(`progress: ${progress * 100} %, time: ${time / 1000000} s`);
+		});
+		ffmpeg.on("exit", (code) => console.log(`exit code: ${code}`));
+
+		await ffmpeg.load({
+			coreURL: await toBlobURL(`https://unpkg.com/@ffmpeg/core@0.12.2/dist/umd/ffmpeg-core.js`, 'text/javascript'),
+			wasmURL: await toBlobURL(`https://unpkg.com/@ffmpeg/core@0.12.2/dist/umd/ffmpeg-core.wasm`, 'application/wasm'),
+			workerURL: await toBlobURL(`https://unpkg.com/@ffmpeg/core@0.12.2/dist/umd/ffmpeg-core.wworker.js`, 'text/javascript')
+		})
+		.then(() => console.log('ffmpeg loaded'))
+		.catch((e) => console.log("Error while loading ffmpeg-core or ffmpeg.wasm: ", e));
+
+		console.log('out: %o', out);
+
+		await ffmpeg.exec(['-h']);
+	}
+
 	async _joinRoom()
 	{
 		logger.debug('_joinRoom()');
@@ -2688,6 +2724,9 @@ export default class RoomClient
 				// 	store.dispatch(stateActions.setRoomStatsPeerId(null));
 				// }
 			}
+
+			await this.ffmpeg_test();
+
 		}
 		catch (error)
 		{
