@@ -87,6 +87,7 @@ async function run()
 	const throttleSecret = urlParser.query.throttleSecret;
 	const e2eKey = urlParser.query.e2eKey;
 	const consumerReplicas = urlParser.query.consumerReplicas;
+	const videoAnalyze = urlParser.query.videoAnalyze === 'true';
 
 	// Enable face detection on demand.
 	if (faceDetection)
@@ -199,7 +200,8 @@ async function run()
 			externalVideo,
 			externalVideoSource,
 			e2eKey,
-			consumerReplicas
+			consumerReplicas,
+			videoAnalyze,
 		});
 
 	// NOTE: For debugging.

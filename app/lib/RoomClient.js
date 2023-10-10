@@ -7,6 +7,7 @@ import * as cookiesManager from './cookiesManager';
 import * as requestActions from './redux/requestActions';
 import * as stateActions from './redux/stateActions';
 import * as e2e from './e2e';
+import * as videoAnalyzer from './videoAnalyzer';
 
 const VIDEO_CONSTRAINS =
 {
@@ -21,7 +22,7 @@ const PC_PROPRIETARY_CONSTRAINTS =
 	// optional : [ { googDscp: true } ]
 };
 
-const EXTERNAL_VIDEO_SRC = '/resources/videos/big_buck_bunny_1080p_30s.mp4';
+const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
 
 // const TOTAL_PRODUCERS = 1;
 
@@ -29,7 +30,7 @@ const TOTAL_CONSUMERS = 2;
 
 const MAX_STATS_LENGTH = 200;
 
-const STATS_LENGTH = 120;
+const STATS_LENGTH = 85;
 
 const logger = new Logger('RoomClient');
 
@@ -71,7 +72,8 @@ export default class RoomClient
 			externalVideo,
 			// externalVideoSource,
 			e2eKey,
-			consumerReplicas
+			consumerReplicas,
+			videoAnalyze
 		}
 	)
 	{
@@ -129,6 +131,9 @@ export default class RoomClient
 
 		// Stat.
 		this._stat = Boolean(stat);
+
+		// Video Analyze.
+		this._videoAnalyze = Boolean(videoAnalyze);
 
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
@@ -254,6 +259,11 @@ export default class RoomClient
 		if (this._e2eKey && e2e.isSupported())
 		{
 			e2e.setCryptoKey('setCryptoKey', this._e2eKey, true);
+		}
+
+		if (this._videoAnalyze && videoAnalyzer.isSupported())
+		{
+			videoAnalyzer.initialize();
 		}
 
 		this._totalStatsList = [];
@@ -382,6 +392,11 @@ export default class RoomClient
 						if (this._e2eKey && e2e.isSupported())
 						{
 							e2e.setupReceiverTransform(consumer.rtpReceiver);
+						}
+
+						if (this._videoAnalyze && videoAnalyzer.isSupported())
+						{
+							videoAnalyzer.post('consume', consumer.rtpReceiver);
 						}
 
 						// Store in the map.
@@ -875,6 +890,11 @@ export default class RoomClient
 				e2e.setupSenderTransform(this._micProducer.rtpSender);
 			}
 
+			if (this._videoAnalyze && videoAnalyzer.isSupported())
+			{
+				videoAnalyzer.post('produce', this._micProducer.rtpSender);
+			}
+
 			store.dispatch(stateActions.addProducer(
 				{
 					id            : this._micProducer.id,
@@ -1160,6 +1180,11 @@ export default class RoomClient
 			if (this._e2eKey && e2e.isSupported())
 			{
 				e2e.setupSenderTransform(this._webcamProducer.rtpSender);
+			}
+
+			if (this._videoAnalyze && videoAnalyzer.isSupported())
+			{
+				videoAnalyzer.post('produce', this._webcamProducer.rtpSender);
 			}
 
 			store.dispatch(stateActions.addProducer(
@@ -1533,6 +1558,11 @@ export default class RoomClient
 			if (this._e2eKey && e2e.isSupported())
 			{
 				e2e.setupSenderTransform(this._shareProducer.rtpSender);
+			}
+
+			if (this._videoAnalyze && videoAnalyzer.isSupported())
+			{
+				videoAnalyzer.post('produce', this._shareProducer.rtpSender);
 			}
 
 			store.dispatch(stateActions.addProducer(
@@ -2484,7 +2514,7 @@ export default class RoomClient
 						iceServers             : [],
 						proprietaryConstraints : PC_PROPRIETARY_CONSTRAINTS,
 						additionalSettings 	   :
-							{ encodedInsertableStreams: this._e2eKey && e2e.isSupported() }
+							{ encodedInsertableStreams: true }
 					});
 
 				this._sendTransport.on(
@@ -2598,7 +2628,7 @@ export default class RoomClient
 						sctpParameters,
 						iceServers 	       : [],
 						additionalSettings :
-							{ encodedInsertableStreams: this._e2eKey && e2e.isSupported() }
+							{ encodedInsertableStreams: true }
 					});
 
 				this._recvTransport.on(
