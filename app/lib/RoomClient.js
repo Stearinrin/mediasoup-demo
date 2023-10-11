@@ -32,6 +32,8 @@ const MAX_STATS_LENGTH = 200;
 
 const STATS_LENGTH = 85;
 
+const VIDEO_LENGTH = 80;
+
 const logger = new Logger('RoomClient');
 
 let store;
@@ -127,7 +129,7 @@ export default class RoomClient
 		this._forceVP9 = Boolean(forceVP9);
 
 		// Recording.
-		// this._recording = Boolean(record);
+		this._recording = Boolean(record);
 
 		// Stat.
 		this._stat = Boolean(stat);
@@ -249,7 +251,7 @@ export default class RoomClient
 		// Local Webcam.
 		// @type {Object} with:
 		// - {MediaDeviceInfo} [device]
-		// - {String} [resolution] - 'qvga' / 'vga' / 'hd'.
+		// - {String} [resolution] - 'qvga' / 'vga' / 'hd' / 'fhd'.
 		this._webcam =
 		{
 			device     : null,
@@ -684,11 +686,6 @@ export default class RoomClient
 							text : `${peer.displayName} has joined the room`
 						}));
 
-					// if (this._stat)
-					// {
-					// 	await this._triggerStatsSync();
-					// }
-
 					break;
 				}
 
@@ -1058,7 +1055,11 @@ export default class RoomClient
 						video :
 						{
 							deviceId : { ideal: device.deviceId },
-							...VIDEO_CONSTRAINS[resolution]
+							width: { ideal: 1920 },
+							height : { ideal: 1080 },
+							frameRate : { min: 30, max: 60 },
+
+							// ...VIDEO_CONSTRAINS[resolution]
 						}
 					});
 
@@ -1176,6 +1177,13 @@ export default class RoomClient
 					codecOptions,
 					codec
 				});
+
+			// Recording.
+			if (this._recording)
+			{
+				await this._startRecording();
+			}
+
 
 			if (this._e2eKey && e2e.isSupported())
 			{
@@ -2890,76 +2898,87 @@ export default class RoomClient
 
 	async _startRecording()
 	{
-		logger.debug('_startRecording()');
+		logger.debug('_startRecording() | [produce:%s, consume:%s]', this._produce, this._consume);
 		// let stream;
-		let chunks = [];
-		let recorder;
-		
-		// stream = await navigator.mediaDevices.getUserMedia({
-		// 	audio: true,
-		// 	video: true
-		// }).then((stream) => {
-		// 	return stream;
-		// }).catch((err) => {
-		// 	logger.error('_startRecording() | recording failed: %o', err);
-		// });
 
-		let videoTracks = [];
-		this._consumers.forEach((consumer) => {
-			logger.debug("consumer %o", consumer);
-			videoTracks.push(consumer.track);
-		});
-		// videoStream = this._consumers.getRtcPeerConnection();
-		videoStream = new MediaStream(videoTracks);
+		let videoTracks = new Array();
 
-		recorder = new MediaRecorder(videoStream);
-		// try {
-		// 	logger.debug("videoStream %o", videoStream);
-		// 	if (typeof videoStream === 'MediaStreamTrack') {
-		// 		recorder = new MediaRecorder(videoStream);
-		// 	}
-		// 	else {
-		// 		logger.warn('_startRecording() | recording failed: %o', 'videoStream is not a MediaStream');
-		// 		return;
-		// 	}
-		// } catch (e) {
-		// 	logger.error('_startRecording() | recording failed: %o', e);
-		// 	return;
-		// }
-
-		if (recorder !== undefined) 
+		if (this._produce)
 		{
-			logger.debug("typeof recorder is " + typeof recorder);
-			
+			let producer = this._webcamProducer;
+			logger.debug("producer %o", producer);
+			if (producer._track.kind === "video") {
+				videoTracks.push(producer._track);
+			}
+		}
+		else if (this._consume)
+		{
+			this._consumers.forEach((consumer) => {
+				logger.debug("consumer %o", consumer);
+				if (consumer._track.kind === "video") {
+					videoTracks.push(consumer._track);
+				}
+			});
+		}
+		else
+		{
+			logger.warn('_startRecording() | no producer or consumer');
+			return;
+		}
+
+		if (videoTracks.length === 0) {
+			logger.warn('_startRecording() | no video track');
+			return;
+		}
+
+		videoStream = new MediaStream(videoTracks);
+		logger.debug("videoStream | %o", videoStream);
+
+		let recorder;
+		recorder = new MediaRecorder(videoStream, {
+			mimeType: 'video/webm; codecs=vp9',
+			videoBitsPerSecond : 0
+		});
+
+		let chunks = [];
+		if (recorder !== undefined)
+		{
 			recorder.ondataavailable = (e) => {
 				logger.debug('_startRecording() | recording data %o', e.data);
 				if (e.data.size == 0) {
 					logger.debug('_startRecording() | recording empty data');
 				}
 				else {
-					let videoBlob = videoStream;
+					let videoBlob = e.data;
 					chunks.push(videoBlob);
 				}
 			}
 
 			recorder.onstop = (e) => {
 				let completeBlob = new Blob(chunks, {
-					type: chunks[0].type
+					type: 'video/webm'
 				});
-				let blobUrl = URL.createObjectURL(completeBlob);
-				let a = document.createElement('a');
-				
-				a.href = blobUrl;
-				a.download = 'video.webm';
-				a.click();
-				
+
+				let side;
+				if (this._consume === false && this._produce === false) side = 'none';
+				else if (this._produce === false) side = 'consumer';
+				else if (this._consume === false) side = 'producer';
+				else side = 'both';
+
+				const now = new Date();
+				const isotime = now.toISOString().replace(/:/g, '-');
+				const unique_id = Math.random().toString(36).slice(-6);
+				const filename = `webrtc_mediasoup_video_${isotime}_${side}_${unique_id}.webm`;
+
+				fileDownload(completeBlob, filename)
+
 				logger.debug('_startRecording() | recording stopped');
 			}
 
-			recorder.start();
+			await recorder.start();
 			logger.debug('_startRecording() | recording started');
 
-			setTimeout(() => recorder.stop(), 10000);
+			setTimeout(() => recorder.stop(), VIDEO_LENGTH * 1000);
 		}
 	}
 }
