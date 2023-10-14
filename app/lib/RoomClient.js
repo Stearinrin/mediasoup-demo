@@ -1858,8 +1858,7 @@ export default class RoomClient
 			const now = new Date();
 			const blob = new Blob([ JSON.stringify(this._totalStatsList, null, 2) ], { type: 'application/json' });
 			const isotime = now.toISOString().replace(/:/g, '-');
-			const unique_id = Math.random().toString(36).slice(-6);
-			const filename = `webrtc_mediasoup_stats_${isotime}_${side}_${unique_id}.json`;
+			const filename = `webrtc_mediasoup_stats_${isotime}_${side}_${displayName}.json`;
 
 			fileDownload(blob, filename);
 		}
@@ -2967,8 +2966,7 @@ export default class RoomClient
 
 				const now = new Date();
 				const isotime = now.toISOString().replace(/:/g, '-');
-				const unique_id = Math.random().toString(36).slice(-6);
-				const filename = `webrtc_mediasoup_video_${isotime}_${side}_${unique_id}.webm`;
+				const filename = `webrtc_mediasoup_video_${isotime}_${side}_${displayName}.webm`;
 
 				fileDownload(completeBlob, filename)
 
