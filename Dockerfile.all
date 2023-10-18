@@ -17,7 +17,7 @@ RUN \
 	python3 python3-pip iputils-ping net-tools iproute2 iperf iperf3 telnet
 
 # Install mediasoup dependencies
-RUN npm install -g npm gulp-cli eslint
+RUN npm install -g gulp-cli eslint
 
 # Install media server
 WORKDIR /server

@@ -30,9 +30,9 @@ const TOTAL_CONSUMERS = 2;
 
 const MAX_STATS_LENGTH = 200;
 
-const STATS_LENGTH = 85;
+const STATS_LENGTH = 45;
 
-const VIDEO_LENGTH = 80;
+const VIDEO_LENGTH = 40;
 
 const logger = new Logger('RoomClient');
 
@@ -1858,7 +1858,7 @@ export default class RoomClient
 			const now = new Date();
 			const blob = new Blob([ JSON.stringify(this._totalStatsList, null, 2) ], { type: 'application/json' });
 			const isotime = now.toISOString().replace(/:/g, '-');
-			const filename = `webrtc_mediasoup_stats_${isotime}_${side}_${displayName}.json`;
+			const filename = `webrtc_mediasoup_stats_${isotime}_${side}_${this._displayName}.json`;
 
 			fileDownload(blob, filename);
 		}
@@ -2966,7 +2966,7 @@ export default class RoomClient
 
 				const now = new Date();
 				const isotime = now.toISOString().replace(/:/g, '-');
-				const filename = `webrtc_mediasoup_video_${isotime}_${side}_${displayName}.webm`;
+				const filename = `webrtc_mediasoup_video_${isotime}_${side}_${this._displayName}.webm`;
 
 				fileDownload(completeBlob, filename)
 
