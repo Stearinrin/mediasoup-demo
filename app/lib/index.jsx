@@ -88,6 +88,8 @@ async function run()
 	const e2eKey = urlParser.query.e2eKey;
 	const consumerReplicas = urlParser.query.consumerReplicas;
 	const videoAnalyze = urlParser.query.videoAnalyze === 'true';
+	const keyFrameRequestInterval = urlParser.query.keyFrameRequestInterval ?
+		Number(urlParser.query.keyFrameRequestInterval) : 0;
 
 	// Enable face detection on demand.
 	if (faceDetection)
@@ -202,6 +204,7 @@ async function run()
 			e2eKey,
 			consumerReplicas,
 			videoAnalyze,
+			keyFrameRequestInterval,
 		});
 
 	// NOTE: For debugging.

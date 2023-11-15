@@ -30,9 +30,9 @@ const TOTAL_CONSUMERS = 2;
 
 const MAX_STATS_LENGTH = 200;
 
-const STATS_LENGTH = 45;
+const STATS_LENGTH = 80;
 
-const VIDEO_LENGTH = 40;
+const VIDEO_LENGTH = 80;
 
 const logger = new Logger('RoomClient');
 
@@ -75,7 +75,8 @@ export default class RoomClient
 			// externalVideoSource,
 			e2eKey,
 			consumerReplicas,
-			videoAnalyze
+			videoAnalyze,
+			keyFrameRequestInterval
 		}
 	)
 	{
@@ -136,6 +137,10 @@ export default class RoomClient
 
 		// Video Analyze.
 		this._videoAnalyze = Boolean(videoAnalyze);
+
+		// Interval for requesting key frame.
+		// @type {Number}
+		this._interval = keyFrameRequestInterval;
 
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
@@ -447,6 +452,13 @@ export default class RoomClient
 						if (this._stat)
 						{
 							await this._triggerStatsSync(peerId);
+						}
+
+						// Request a key frame to the video producer.
+						if (this._interval > 0) {
+							setInterval(async () => {
+								await this.requestConsumerKeyFrame(consumer.id);
+							}, this._interval);
 						}
 					}
 					catch (error)
@@ -1057,7 +1069,7 @@ export default class RoomClient
 							deviceId : { ideal: device.deviceId },
 							width: { ideal: 1920 },
 							height : { ideal: 1080 },
-							frameRate : { min: 30, max: 60 },
+							frameRate : { ideal: 30, max: 60 },
 
 							// ...VIDEO_CONSTRAINS[resolution]
 						}
@@ -1129,7 +1141,7 @@ export default class RoomClient
 					encodings =
 					[
 						{
-							maxBitrate      : 50000000,
+							maxBitrate      : 5000000,
 							scalabilityMode : this._webcamScalabilityMode || 'L3T3_KEY'
 						}
 					];
@@ -1141,7 +1153,7 @@ export default class RoomClient
 					[
 						{
 							scaleResolutionDownBy : 1,
-							maxBitrate            : 50000000,
+							maxBitrate            : 5000000,
 							scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
 						}
 					];
@@ -1151,7 +1163,7 @@ export default class RoomClient
 						encodings.unshift(
 							{
 								scaleResolutionDownBy : 2,
-								maxBitrate            : 10000000,
+								maxBitrate            : 1000000,
 								scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
 							}
 						);
@@ -1162,7 +1174,7 @@ export default class RoomClient
 						encodings.unshift(
 							{
 								scaleResolutionDownBy : 4,
-								maxBitrate            : 5000000,
+								maxBitrate            : 500000,
 								scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
 							}
 						);
@@ -2958,15 +2970,16 @@ export default class RoomClient
 					type: 'video/webm'
 				});
 
-				let side;
-				if (this._consume === false && this._produce === false) side = 'none';
-				else if (this._produce === false) side = 'consumer';
-				else if (this._consume === false) side = 'producer';
-				else side = 'both';
+				// let side;
+				// if (this._consume === false && this._produce === false) side = 'none';
+				// else if (this._produce === false) side = 'consumer';
+				// else if (this._consume === false) side = 'producer';
+				// else side = 'both';
 
-				const now = new Date();
-				const isotime = now.toISOString().replace(/:/g, '-');
-				const filename = `webrtc_mediasoup_video_${isotime}_${side}_${this._displayName}.webm`;
+				// const now = new Date();
+				// const isotime = now.toISOString().replace(/:/g, '-');
+				// const filename = `webrtc_mediasoup_video_${isotime}_${side}_${this._displayName}.webm`;
+				const filename = `${this._displayName}.webm`;
 
 				fileDownload(completeBlob, filename)
 
