@@ -29,13 +29,13 @@ By adding query parameters into the URL you can set certain settings of the appl
 | `forceVP9`        | Boolean | Force VP9 codec for webcam and screen sharing | `false` |
 | `enableWebcamLayers` | Boolean | Enable simulcast or SVC for webcam | `true` |
 | `enableSharingLayers` | Boolean | Enable simulcast or SVC for screen sharing | `true` |
-| `webcamScalabilityMode` | String | `scalabilityMode` for webcam | 'L1T3' for VP8/H264 (in each simculast encoding), 'L3T3_KEY' for VP9 |
-| `sharingScalabilityMode` | String | `scalabilityMode` for screen sharing | 'L1T3' for VP8/H264 (in each simculast encoding), 'L3T3' for VP9 |
+| `webcamScalabilityMode` | String | `scalabilityMode` for webcam | 'L1T3' for VP8/H264 (in each simulcast encoding), 'L3T3_KEY' for VP9 |
+| `sharingScalabilityMode` | String | `scalabilityMode` for screen sharing | 'L1T3' for VP8/H264 (in each simulcast encoding), 'L3T3' for VP9 |
 | `numSimulcastStreams` | Number | Number of streams for simulcast in webcam and screen sharing | 3 |
 | `info`             | Boolean | Display detailed information about media transmission | `false` |
 | `faceDetection`    | Boolean | Run face detection | `false` |
 | `externalVideo`    | Boolean | Send an external video instead of local webcam | `false` |
-| `e2eKey`           | String | Key for media E2E encryption/decryption (just works with some OUPS and VP8 codecs) | |
+| `e2eKey`           | String | Key for media E2E encryption/decryption (just works with some OPUS and VP8 codecs) | |
 | `consumerReplicas` | Number | Create artificial replicas of yourself and receive their audio and video (not displayed in the UI) | 0 |
 
 
