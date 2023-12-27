@@ -100,10 +100,12 @@ async function runMediasoupWorkers()
 	{
 		const worker = await mediasoup.createWorker(
 			{
-				logLevel   : config.mediasoup.workerSettings.logLevel,
-				logTags    : config.mediasoup.workerSettings.logTags,
-				rtcMinPort : Number(config.mediasoup.workerSettings.rtcMinPort),
-				rtcMaxPort : Number(config.mediasoup.workerSettings.rtcMaxPort)
+				dtlsCertificateFile : config.mediasoup.workerSettings.dtlsCertificateFile,
+				dtlsPrivateKeyFile  : config.mediasoup.workerSettings.dtlsPrivateKeyFile,
+				logLevel            : config.mediasoup.workerSettings.logLevel,
+				logTags             : config.mediasoup.workerSettings.logTags,
+				rtcMinPort          : Number(config.mediasoup.workerSettings.rtcMinPort),
+				rtcMaxPort          : Number(config.mediasoup.workerSettings.rtcMaxPort)
 			});
 
 		worker.on('died', () =>
@@ -141,6 +143,10 @@ async function runMediasoupWorkers()
 			const usage = await worker.getResourceUsage();
 
 			logger.info('mediasoup Worker resource usage [pid:%d]: %o', worker.pid, usage);
+
+			const dump = await worker.dump();
+
+			logger.info('mediasoup Worker dump [pid:%d]: %o', worker.pid, dump);
 		}, 120000);
 	}
 }
