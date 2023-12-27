@@ -7,12 +7,14 @@ import * as cookiesManager from './cookiesManager';
 import * as requestActions from './redux/requestActions';
 import * as stateActions from './redux/stateActions';
 import * as e2e from './e2e';
+import * as videoAnalyzer from './videoAnalyzer';
 
 const VIDEO_CONSTRAINS =
 {
 	qvga : { width: { ideal: 320 }, height: { ideal: 240 } },
 	vga  : { width: { ideal: 640 }, height: { ideal: 480 } },
-	hd   : { width: { ideal: 1280 }, height: { ideal: 720 } }
+	hd   : { width: { ideal: 1280 }, height: { ideal: 720 } },
+	fhd  : { width: { ideal: 1920 }, height: { ideal: 1080 } }
 };
 
 const PC_PROPRIETARY_CONSTRAINTS =
@@ -20,38 +22,17 @@ const PC_PROPRIETARY_CONSTRAINTS =
 	// optional : [ { googDscp: true } ]
 };
 
-// Used for simulcast webcam video.
-const WEBCAM_SIMULCAST_ENCODINGS =
-[
-	{ scaleResolutionDownBy: 4, maxBitrate: 500000, scalabilityMode: 'S1T2' },
-	{ scaleResolutionDownBy: 2, maxBitrate: 1000000, scalabilityMode: 'S1T2' },
-	{ scaleResolutionDownBy: 1, maxBitrate: 5000000, scalabilityMode: 'S1T2' }
-];
-
-// Used for VP9 webcam video.
-const WEBCAM_KSVC_ENCODINGS =
-[
-	{ scalabilityMode: 'S3T3_KEY' }
-];
-
-// Used for simulcast screen sharing.
-const SCREEN_SHARING_SIMULCAST_ENCODINGS =
-[
-	{ dtx: true, maxBitrate: 1500000 },
-	{ dtx: true, maxBitrate: 6000000 }
-];
-
-// Used for VP9 screen sharing.
-const SCREEN_SHARING_SVC_ENCODINGS =
-[
-	{ scalabilityMode: 'S3T3', dtx: true }
-];
-
-const EXTERNAL_VIDEO_SRC = '/resources/videos/HDR-CX900.mp4';
+const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
 
 // const TOTAL_PRODUCERS = 1;
 
 const TOTAL_CONSUMERS = 2;
+
+const MAX_STATS_LENGTH = 200;
+
+const STATS_LENGTH = 80;
+
+const VIDEO_LENGTH = 80;
 
 const logger = new Logger('RoomClient');
 
@@ -91,8 +72,11 @@ export default class RoomClient
 			record,
 			stat,
 			externalVideo,
+			// externalVideoSource,
 			e2eKey,
-			consumerReplicas
+			consumerReplicas,
+			videoAnalyze,
+			keyFrameRequestInterval
 		}
 	)
 	{
@@ -151,6 +135,13 @@ export default class RoomClient
 		// Stat.
 		this._stat = Boolean(stat);
 
+		// Video Analyze.
+		this._videoAnalyze = Boolean(videoAnalyze);
+
+		// Interval for requesting key frame.
+		// @type {Number}
+		this._interval = keyFrameRequestInterval;
+
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
 		this._enableWebcamLayers = Boolean(enableWebcamLayers);
@@ -190,10 +181,20 @@ export default class RoomClient
 		{
 			this._externalVideo = document.createElement('video');
 
-			this._externalVideo.controls = true;
+			// this._externalVideo.controls = true;
 			this._externalVideo.muted = true;
 			this._externalVideo.loop = true;
 			this._externalVideo.setAttribute('playsinline', '');
+
+			// if (externalVideoSource)
+			// {
+			// 	// Local File Inclusion (LFI) valunerability!
+			// 	this._externalVideo.src = externalVideoSource;
+			// }
+			// else
+			// {
+			// 	this._externalVideo.src = EXTERNAL_VIDEO_SRC;
+			// }
 			this._externalVideo.src = EXTERNAL_VIDEO_SRC;
 
 			this._externalVideo.play()
@@ -255,16 +256,21 @@ export default class RoomClient
 		// Local Webcam.
 		// @type {Object} with:
 		// - {MediaDeviceInfo} [device]
-		// - {String} [resolution] - 'qvga' / 'vga' / 'hd'.
+		// - {String} [resolution] - 'qvga' / 'vga' / 'hd' / 'fhd'.
 		this._webcam =
 		{
 			device     : null,
-			resolution : 'hd'
+			resolution : 'fhd'
 		};
 
 		if (this._e2eKey && e2e.isSupported())
 		{
 			e2e.setCryptoKey('setCryptoKey', this._e2eKey, true);
+		}
+
+		if (this._videoAnalyze && videoAnalyzer.isSupported())
+		{
+			videoAnalyzer.initialize();
 		}
 
 		this._totalStatsList = [];
@@ -395,6 +401,11 @@ export default class RoomClient
 							e2e.setupReceiverTransform(consumer.rtpReceiver);
 						}
 
+						if (this._videoAnalyze && videoAnalyzer.isSupported())
+						{
+							videoAnalyzer.post('consume', consumer.rtpReceiver);
+						}
+
 						// Store in the map.
 						this._consumers.set(consumer.id, consumer);
 
@@ -441,6 +452,13 @@ export default class RoomClient
 						if (this._stat)
 						{
 							await this._triggerStatsSync(peerId);
+						}
+
+						// Request a key frame to the video producer.
+						if (this._interval > 0) {
+							setInterval(async () => {
+								await this.requestConsumerKeyFrame(consumer.id);
+							}, this._interval);
 						}
 					}
 					catch (error)
@@ -680,11 +698,6 @@ export default class RoomClient
 							text : `${peer.displayName} has joined the room`
 						}));
 
-					// if (this._stat)
-					// {
-					// 	await this._triggerStatsSync();
-					// }
-
 					break;
 				}
 
@@ -886,6 +899,11 @@ export default class RoomClient
 				e2e.setupSenderTransform(this._micProducer.rtpSender);
 			}
 
+			if (this._videoAnalyze && videoAnalyzer.isSupported())
+			{
+				videoAnalyzer.post('produce', this._micProducer.rtpSender);
+			}
+
 			store.dispatch(stateActions.addProducer(
 				{
 					id            : this._micProducer.id,
@@ -1049,7 +1067,11 @@ export default class RoomClient
 						video :
 						{
 							deviceId : { ideal: device.deviceId },
-							...VIDEO_CONSTRAINS[resolution]
+							width: { ideal: 1920 },
+							height : { ideal: 1080 },
+							frameRate : { ideal: 30, max: 60 },
+
+							// ...VIDEO_CONSTRAINS[resolution]
 						}
 					});
 
@@ -1068,7 +1090,7 @@ export default class RoomClient
 			let codec;
 			const codecOptions =
 			{
-				videoGoogleStartBitrate : 1000
+				videoGoogleStartBitrate : 150000
 			};
 
 			if (this._forceVP8)
@@ -1168,9 +1190,21 @@ export default class RoomClient
 					codec
 				});
 
+			// Recording.
+			if (this._recording)
+			{
+				await this._startRecording();
+			}
+
+
 			if (this._e2eKey && e2e.isSupported())
 			{
 				e2e.setupSenderTransform(this._webcamProducer.rtpSender);
+			}
+
+			if (this._videoAnalyze && videoAnalyzer.isSupported())
+			{
+				videoAnalyzer.post('produce', this._webcamProducer.rtpSender);
 			}
 
 			store.dispatch(stateActions.addProducer(
@@ -1337,10 +1371,13 @@ export default class RoomClient
 					this._webcam.resolution = 'hd';
 					break;
 				case 'hd':
+					this._webcam.resolution = 'fhd';
+					break;
+				case 'fhd':
 					this._webcam.resolution = 'qvga';
 					break;
 				default:
-					this._webcam.resolution = 'hd';
+					this._webcam.resolution = 'fhd';
 			}
 
 			logger.debug('changeWebcamResolution() | calling getUserMedia()');
@@ -1541,6 +1578,11 @@ export default class RoomClient
 			if (this._e2eKey && e2e.isSupported())
 			{
 				e2e.setupSenderTransform(this._shareProducer.rtpSender);
+			}
+
+			if (this._videoAnalyze && videoAnalyzer.isSupported())
+			{
+				videoAnalyzer.post('produce', this._shareProducer.rtpSender);
 			}
 
 			store.dispatch(stateActions.addProducer(
@@ -1828,7 +1870,7 @@ export default class RoomClient
 			const now = new Date();
 			const blob = new Blob([ JSON.stringify(this._totalStatsList, null, 2) ], { type: 'application/json' });
 			const isotime = now.toISOString().replace(/:/g, '-');
-			const filename = `webrtc_mediasoup_stats_${isotime}_${side}.json`;
+			const filename = `webrtc_mediasoup_stats_${isotime}_${side}_${this._displayName}.json`;
 
 			fileDownload(blob, filename);
 		}
@@ -2399,17 +2441,17 @@ export default class RoomClient
 
 	async pushTotalStats(stats)
 	{
-				try
+		try
 		{
 			// Avoid memory leaks by fooling.
-			if (this._totalStatsList.length < 100)
+			if (this._totalStatsList.length < MAX_STATS_LENGTH)
 			{
 				logger.debug('pushTotalStats()');
 
 				this._totalStatsList.push(stats);
 			}
 			
-			if (this._totalStatsList.length == 30)
+			if (this._totalStatsList.length == STATS_LENGTH)
 			{
 				this.downloadStats();
 			}
@@ -2491,7 +2533,7 @@ export default class RoomClient
 						iceServers             : [],
 						proprietaryConstraints : PC_PROPRIETARY_CONSTRAINTS,
 						additionalSettings 	   :
-							{ encodedInsertableStreams: this._e2eKey && e2e.isSupported() }
+							{ encodedInsertableStreams: true }
 					});
 
 				this._sendTransport.on(
@@ -2605,7 +2647,7 @@ export default class RoomClient
 						sctpParameters,
 						iceServers 	       : [],
 						additionalSettings :
-							{ encodedInsertableStreams: this._e2eKey && e2e.isSupported() }
+							{ encodedInsertableStreams: true }
 					});
 
 				this._recvTransport.on(
@@ -2867,76 +2909,87 @@ export default class RoomClient
 
 	async _startRecording()
 	{
-		logger.debug('_startRecording()');
+		logger.debug('_startRecording() | [produce:%s, consume:%s]', this._produce, this._consume);
 		// let stream;
-		let chunks = [];
-		let recorder;
-		
-		// stream = await navigator.mediaDevices.getUserMedia({
-		// 	audio: true,
-		// 	video: true
-		// }).then((stream) => {
-		// 	return stream;
-		// }).catch((err) => {
-		// 	logger.error('_startRecording() | recording failed: %o', err);
-		// });
 
-		let videoTracks = [];
-		this._consumers.forEach((consumer) => {
-			logger.debug("consumer %o", consumer);
-			videoTracks.push(consumer.track);
-		});
-		// videoStream = this._consumers.getRtcPeerConnection();
-		videoStream = new MediaStream(videoTracks);
+		let videoTracks = new Array();
 
-		recorder = new MediaRecorder(videoStream);
-		// try {
-		// 	logger.debug("videoStream %o", videoStream);
-		// 	if (typeof videoStream === 'MediaStreamTrack') {
-		// 		recorder = new MediaRecorder(videoStream);
-		// 	}
-		// 	else {
-		// 		logger.warn('_startRecording() | recording failed: %o', 'videoStream is not a MediaStream');
-		// 		return;
-		// 	}
-		// } catch (e) {
-		// 	logger.error('_startRecording() | recording failed: %o', e);
-		// 	return;
-		// }
-
-		if (recorder !== undefined) 
+		if (this._produce)
 		{
-			logger.debug("typeof recorder is " + typeof recorder);
-			
+			let producer = this._webcamProducer;
+			logger.debug("producer %o", producer);
+			if (producer._track.kind === "video") {
+				videoTracks.push(producer._track);
+			}
+		}
+		else if (this._consume)
+		{
+			this._consumers.forEach((consumer) => {
+				logger.debug("consumer %o", consumer);
+				if (consumer._track.kind === "video") {
+					videoTracks.push(consumer._track);
+				}
+			});
+		}
+		else
+		{
+			logger.warn('_startRecording() | no producer or consumer');
+			return;
+		}
+
+		if (videoTracks.length === 0) {
+			logger.warn('_startRecording() | no video track');
+			return;
+		}
+
+		videoStream = new MediaStream(videoTracks);
+		logger.debug("videoStream | %o", videoStream);
+
+		let recorder;
+		recorder = new MediaRecorder(videoStream, {
+			mimeType: 'video/webm; codecs=vp9',
+			videoBitsPerSecond : 0
+		});
+
+		let chunks = [];
+		if (recorder !== undefined)
+		{
 			recorder.ondataavailable = (e) => {
 				logger.debug('_startRecording() | recording data %o', e.data);
 				if (e.data.size == 0) {
 					logger.debug('_startRecording() | recording empty data');
 				}
 				else {
-					let videoBlob = videoStream;
+					let videoBlob = e.data;
 					chunks.push(videoBlob);
 				}
 			}
 
 			recorder.onstop = (e) => {
 				let completeBlob = new Blob(chunks, {
-					type: chunks[0].type
+					type: 'video/webm'
 				});
-				let blobUrl = URL.createObjectURL(completeBlob);
-				let a = document.createElement('a');
-				
-				a.href = blobUrl;
-				a.download = 'video.webm';
-				a.click();
-				
+
+				// let side;
+				// if (this._consume === false && this._produce === false) side = 'none';
+				// else if (this._produce === false) side = 'consumer';
+				// else if (this._consume === false) side = 'producer';
+				// else side = 'both';
+
+				// const now = new Date();
+				// const isotime = now.toISOString().replace(/:/g, '-');
+				// const filename = `webrtc_mediasoup_video_${isotime}_${side}_${this._displayName}.webm`;
+				const filename = `${this._displayName}.webm`;
+
+				fileDownload(completeBlob, filename)
+
 				logger.debug('_startRecording() | recording stopped');
 			}
 
-			recorder.start();
+			await recorder.start();
 			logger.debug('_startRecording() | recording started');
 
-			setTimeout(() => recorder.stop(), 10000);
+			setTimeout(() => recorder.stop(), VIDEO_LENGTH * 1000);
 		}
 	}
 }

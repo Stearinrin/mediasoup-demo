@@ -11,27 +11,27 @@ const Notifications = ({ notifications, onClick }) =>
 	return (
 		<div data-component='Notifications'>
 			{
-				notifications.map((notification) =>
-				{
-					return (
-						<Appear key={notification.id} duration={250}>
-							<div
-								className={classnames('notification', notification.type)}
-								onClick={() => onClick(notification.id)}
-							>
-								<div className='icon' />
+				// notifications.map((notification) =>
+				// {
+				// 	return (
+				// 		<Appear key={notification.id} duration={250}>
+				// 			<div
+				// 				className={classnames('notification', notification.type)}
+				// 				onClick={() => onClick(notification.id)}
+				// 			>
+				// 				<div className='icon' />
 
-								<div className='body'>
-									<If condition={notification.title}>
-										<p className='title'>{notification.title}</p>
-									</If>
+				// 				<div className='body'>
+				// 					<If condition={notification.title}>
+				// 						<p className='title'>{notification.title}</p>
+				// 					</If>
 
-									<p className='text'>{notification.text}</p>
-								</div>
-							</div>
-						</Appear>
-					);
-				})
+				// 					<p className='text'>{notification.text}</p>
+				// 				</div>
+				// 			</div>
+				// 		</Appear>
+				// 	);
+				// })
 			}
 		</div>
 	);

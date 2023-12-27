@@ -260,8 +260,10 @@ gulp.task('live', gulp.series(
 				},
 				https     : config.https.tls,
 				ghostMode : false,
-				files     : path.join(OUTPUT_DIR, '**', '*')
+				files     : path.join(OUTPUT_DIR, '**', '*'),
+				notify    : false
 			});
+
 
 		done();
 	}
@@ -286,7 +288,8 @@ gulp.task('devel', gulp.series(
 					},
 					https     : config.https.tls,
 					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+					files     : path.join(OUTPUT_DIR, '**', '*'),
+					notify    : false
 				},
 				resolve);
 		});
@@ -304,7 +307,8 @@ gulp.task('devel', gulp.series(
 					},
 					https     : config.https.tls,
 					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+					files     : path.join(OUTPUT_DIR, '**', '*'),
+					notify    : false
 				},
 				resolve);
 		});

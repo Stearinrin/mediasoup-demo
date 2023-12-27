@@ -76,10 +76,10 @@ class Me extends React.Component
 			<div
 				data-component='Me'
 				ref={(node) => (this._rootNode = node)}
-				data-tip={tip}
-				data-tip-disable={!tip}
+				// data-tip={tip}
+				// data-tip-disable={!tip}
 			>
-				<If condition={connected}>
+				{/* <If condition={connected}>
 					<div className='controls'>
 						<div
 							className={classnames('button', 'mic', micState)}
@@ -130,7 +130,7 @@ class Me extends React.Component
 							}}
 						/>
 					</div>
-				</If>
+				</If> */}
 
 				<PeerView
 					isMe
@@ -162,13 +162,13 @@ class Me extends React.Component
 					onStatsClick={onSetStatsPeerId}
 				/>
 
-				<ReactTooltip
+				{/* <ReactTooltip
 					type='light'
 					effect='solid'
 					delayShow={100}
 					delayHide={100}
 					delayUpdate={50}
-				/>
+				/> */}
 			</div>
 		);
 	}

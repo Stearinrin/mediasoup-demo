@@ -32,7 +32,7 @@ const Peer = (props) =>
 
 	return (
 		<div data-component='Peer'>
-			<div className='indicators'>
+			{/* <div className='indicators'>
 				<If condition={!audioEnabled}>
 					<div className='icon mic-off' />
 				</If>
@@ -40,7 +40,7 @@ const Peer = (props) =>
 				<If condition={!videoConsumer}>
 					<div className='icon webcam-off' />
 				</If>
-			</div>
+			</div> */}
 
 			<PeerView
 				peer={peer}

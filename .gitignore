@@ -1,5 +1,4 @@
 node_modules/
-scripts/
 statistics/
 output/
 videos/
@@ -16,8 +15,6 @@ videos/
 
 .node-version
 .tool-versions
-package-lock.json
-yarn.lock
 
-/scripts/*
-!/scripts/producer.py
+yarn.lock
+package-lock.json

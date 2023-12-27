@@ -1,0 +1,41 @@
+FROM ubuntu AS stage-one
+
+# Install Node.js v16.20.0
+RUN \
+	set -x \
+	&& apt-get update \
+	&& apt-get install -y curl \
+	&& curl -sL https://deb.nodesource.com/setup_16.x | bash - \
+	&& apt-get install -y nodejs
+
+# Install DEB dependencies and others.
+RUN \
+	set -x \
+	&& apt-get update \
+	&& apt-get full-upgrade -y \
+	&& apt-get install -y git net-tools build-essential libc6-dev \
+	python3 python3-pip iputils-ping net-tools iproute2 iperf iperf3 telnet
+
+# Install mediasoup dependencies
+RUN npm install -g gulp-cli eslint
+
+# Install media server
+WORKDIR /server
+COPY ./server/package.json .
+
+RUN npm install
+
+COPY ./server/ .
+
+# Install application server
+WORKDIR /app
+COPY ./app/package.json .
+RUN npm install --legacy-peer-deps
+
+COPY ./app/ .
+#RUN npm run build
+
+# run
+WORKDIR /scripts
+COPY ./scripts/ .
+CMD ["/bin/bash", "/scripts/run.sh"]
